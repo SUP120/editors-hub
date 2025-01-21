@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 229, 231, 235;
+  --background-rgb: 17, 24, 39;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  min-height: 100vh;
+}
+
+.glass-button {
+  background: rgba(139, 92, 246, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  animation: buttonGlow 8s linear infinite;
+}
+
+@keyframes buttonGlow {
+  0% { background: rgba(139, 92, 246, 0.2); }
+  25% { background: rgba(79, 70, 229, 0.2); }
+  50% { background: rgba(67, 56, 202, 0.2); }
+  75% { background: rgba(99, 102, 241, 0.2); }
+  100% { background: rgba(139, 92, 246, 0.2); }
+}
+
+.glass-card {
+  background: rgba(31, 41, 55, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Add any global styles you want here */
+
+/* Add to your existing styles */
+.input-field {
+  @apply w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent;
+}
+
+.dashboard-gradient {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+}
+
+.card-gradient {
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+} 
