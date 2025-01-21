@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
@@ -38,37 +38,42 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    checkUser()
-  }, [])
-
-  const checkUser = async () => {
+  const fetchOrders = useCallback(async (userId: string) => {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-
-      if (!user) {
-        router.push('/auth/signin')
-        return
+      type OrderResponse = {
+        id: string
+        work_id: string
+        client_id: string
+        artist_id: string
+        status: string
+        payment_status: string
+        requirements: string
+        total_amount: number
+        created_at: string
       }
 
-      await fetchOrders(user.id)
-    } catch (error: any) {
-      console.error('Error checking user:', error)
-      setError(error.message)
-    }
-  }
+      type WorkResponse = {
+        title: string
+        images: string[]
+        price: number
+        description: string
+      }
 
-  const fetchOrders = async (userId: string) => {
-    try {
+      type ArtistResponse = {
+        id: string
+        full_name: string
+        email: string
+      }
+
       // First fetch orders
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*')
         .eq('client_id', userId)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }) as { data: OrderResponse[] | null, error: any }
 
       if (ordersError) throw ordersError
+      if (!ordersData) return
 
       // Then fetch related data for each order
       const transformedOrders = await Promise.all(
@@ -78,14 +83,14 @@ export default function OrdersPage() {
             .from('works')
             .select('title, images, price, description')
             .eq('id', order.work_id)
-            .single()
+            .single() as { data: WorkResponse | null }
 
           // Fetch artist details
           const { data: artistData } = await supabase
             .from('profiles')
             .select('id, full_name, email')
             .eq('id', order.artist_id)
-            .single()
+            .single() as { data: ArtistResponse | null }
 
           return {
             ...order,
@@ -105,13 +110,34 @@ export default function OrdersPage() {
       )
 
       setOrders(transformedOrders)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching orders:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  const checkUser = useCallback(async () => {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError) throw authError
+
+      if (!user) {
+        router.push('/auth/signin')
+        return
+      }
+
+      await fetchOrders(user.id)
+    } catch (error) {
+      console.error('Error checking user:', error)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+    }
+  }, [router, fetchOrders])
+
+  useEffect(() => {
+    checkUser()
+  }, [checkUser])
 
   if (loading) {
     return (

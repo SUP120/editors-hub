@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
@@ -26,6 +26,13 @@ type PaymentRequest = {
   requested_at: string
 }
 
+type SupabaseError = {
+  message: string
+  details: string
+  hint: string
+  code: string
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [flaggedArtists, setFlaggedArtists] = useState<FlaggedArtist[]>([])
@@ -33,48 +40,19 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    checkAdmin()
-  }, [])
-
-  const checkAdmin = async () => {
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-
-      if (!user) {
-        router.push('/auth/signin')
-        return
-      }
-
-      // Check if user is an admin
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
-
-      if (profileError) throw profileError
-
-      if (!profile?.is_admin) {
-        router.push('/')
-        return
-      }
-
-      await Promise.all([
-        fetchFlaggedArtists(),
-        fetchPaymentRequests()
-      ])
-    } catch (error: any) {
-      console.error('Error checking admin:', error)
-      setError(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const fetchFlaggedArtists = async () => {
     try {
+      type ViolationResponse = {
+        artist_id: string
+        order_id: string
+        reason: string
+        created_at: string
+        profiles: {
+          full_name: string
+          email: string
+        } | null
+      }
+
       // Get all violations grouped by artist
       const { data: violations, error: violationsError } = await supabase
         .from('artist_violations')
@@ -88,12 +66,13 @@ export default function AdminDashboard() {
             email
           )
         `)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }) as { data: ViolationResponse[] | null, error: SupabaseError | null }
 
       if (violationsError) throw violationsError
+      if (!violations) return
 
       // Group violations by artist
-      const artistViolations = violations.reduce((acc: { [key: string]: FlaggedArtist }, violation) => {
+      const artistViolations = violations.reduce((acc: Record<string, FlaggedArtist>, violation) => {
         const artistId = violation.artist_id
         if (!acc[artistId]) {
           acc[artistId] = {
@@ -114,14 +93,25 @@ export default function AdminDashboard() {
       }, {})
 
       setFlaggedArtists(Object.values(artistViolations))
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching flagged artists:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     }
   }
 
   const fetchPaymentRequests = async () => {
     try {
+      type RequestResponse = {
+        id: string
+        artist_id: string
+        amount: number
+        status: string
+        requested_at: string
+        profiles: {
+          full_name: string
+        } | null
+      }
+
       const { data: requests, error: requestsError } = await supabase
         .from('payment_requests')
         .select(`
@@ -134,9 +124,10 @@ export default function AdminDashboard() {
             full_name
           )
         `)
-        .order('requested_at', { ascending: false })
+        .order('requested_at', { ascending: false }) as { data: RequestResponse[] | null, error: SupabaseError | null }
 
       if (requestsError) throw requestsError
+      if (!requests) return
 
       const transformedRequests = requests.map(request => ({
         id: request.id,
@@ -148,11 +139,51 @@ export default function AdminDashboard() {
       }))
 
       setPaymentRequests(transformedRequests)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching payment requests:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     }
   }
+
+  const checkAdmin = useCallback(async () => {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError) throw authError
+
+      if (!user) {
+        router.push('/auth/signin')
+        return
+      }
+
+      // Check if user is an admin
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single() as { data: { is_admin: boolean } | null, error: SupabaseError | null }
+
+      if (profileError) throw profileError
+
+      if (!profile?.is_admin) {
+        router.push('/')
+        return
+      }
+
+      await Promise.all([
+        fetchFlaggedArtists(),
+        fetchPaymentRequests()
+      ])
+    } catch (error) {
+      console.error('Error checking admin:', error)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }, [router])
+
+  useEffect(() => {
+    checkAdmin()
+  }, [checkAdmin])
 
   const handlePaymentAction = async (requestId: string, action: 'approved' | 'rejected') => {
     try {
@@ -168,9 +199,9 @@ export default function AdminDashboard() {
 
       // Refresh payment requests
       await fetchPaymentRequests()
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error handling payment action:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     }
   }
 
@@ -189,9 +220,9 @@ export default function AdminDashboard() {
 
       // Refresh flagged artists
       await fetchFlaggedArtists()
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error banning artist:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     }
   }
 

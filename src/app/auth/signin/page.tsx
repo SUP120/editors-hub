@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 
+type SupabaseError = {
+  message: string
+  details: string
+  hint: string
+  code: string
+}
+
 export default function SignIn() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -35,7 +42,7 @@ export default function SignIn() {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
-        })
+        }) as { error: SupabaseError | null }
         if (error) throw error
 
         // Redirect to dashboard on success
@@ -47,14 +54,14 @@ export default function SignIn() {
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
-        })
+        }) as { error: SupabaseError | null }
         if (error) throw error
 
         setMessage('Check your email for the magic link!')
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -160,7 +167,7 @@ export default function SignIn() {
                 onClick={() => router.push('/auth/signup')}
                 className="text-violet-400 hover:text-violet-300"
               >
-                Don't have an account? Sign up
+                Don&apos;t have an account? Sign up
               </button>
             </div>
           </form>

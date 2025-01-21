@@ -19,7 +19,7 @@ export default function Home() {
             >
               <Image
                 src="/logo.png"
-                alt="Editor's Hub Logo"
+                alt="Editor&apos;s Hub Logo"
                 width={50}
                 height={50}
                 className="rounded-full"
@@ -31,7 +31,7 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="ml-4 text-2xl font-bold text-white"
             >
-              Editor's Hub
+              Editor&apos;s Hub
             </motion.h1>
           </div>
         </div>
@@ -48,7 +48,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="text-4xl md:text-6xl font-bold text-white mb-6"
             >
-              Welcome to Editor's Hub
+              Welcome to Editor&apos;s Hub
               <span className="block text-violet-400">Your Creative Partner</span>
             </motion.h1>
             <motion.p

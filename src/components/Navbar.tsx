@@ -1,39 +1,49 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
 
 export default function Navbar() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [isArtist, setIsArtist] = useState(false)
   const [loading, setLoading] = useState(true)
   const [pendingOrders, setPendingOrders] = useState(0)
 
-  useEffect(() => {
-    checkUser()
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN') {
-        const user = session?.user
-        if (user) {
-          setUser(user)
-          checkArtistStatus(user.id)
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null)
-        setIsArtist(false)
-      }
-    })
+  const fetchPendingOrdersCount = useCallback(async (userId: string) => {
+    try {
+      const { count } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('artist_id', userId)
+        .eq('status', 'pending')
 
-    return () => {
-      authListener?.subscription.unsubscribe()
+      setPendingOrders(count || 0)
+    } catch (error) {
+      console.error('Error fetching pending orders:', error)
     }
   }, [])
 
-  const checkUser = async () => {
+  const checkArtistStatus = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_artist')
+        .eq('id', userId)
+        .single()
+
+      if (error) throw error
+      setIsArtist(data?.is_artist || false)
+    } catch (error) {
+      console.error('Error checking artist status:', error)
+    }
+  }, [])
+
+  const checkUser = useCallback(async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       if (authError) throw authError
@@ -86,36 +96,27 @@ export default function Navbar() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [fetchPendingOrdersCount])
 
-  const fetchPendingOrdersCount = async (userId: string) => {
-    try {
-      const { count } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('artist_id', userId)
-        .eq('status', 'pending')
+  useEffect(() => {
+    checkUser()
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN') {
+        const user = session?.user
+        if (user) {
+          setUser(user)
+          checkArtistStatus(user.id)
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setIsArtist(false)
+      }
+    })
 
-      setPendingOrders(count || 0)
-    } catch (error) {
-      console.error('Error fetching pending orders:', error)
+    return () => {
+      authListener?.subscription.unsubscribe()
     }
-  }
-
-  const checkArtistStatus = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_artist')
-        .eq('id', userId)
-        .single()
-
-      if (error) throw error
-      setIsArtist(data?.is_artist || false)
-    } catch (error) {
-      console.error('Error checking artist status:', error)
-    }
-  }
+  }, [checkUser, checkArtistStatus])
 
   const handleSignOut = async () => {
     try {

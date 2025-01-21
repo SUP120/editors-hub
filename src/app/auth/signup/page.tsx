@@ -42,9 +42,9 @@ export default function SignUp() {
       }
 
       setEmailSent(true)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error:', error)
-      setError(error.message || 'Failed to send login link')
+      setError(error instanceof Error ? error.message : 'Failed to send login link')
     } finally {
       setIsLoading(false)
     }
@@ -59,13 +59,13 @@ export default function SignUp() {
               Check your email
             </h2>
             <p className="text-gray-300 mb-4">
-              We've sent a magic link to {formData.email}.<br />
+              We&apos;ve sent a magic link to {formData.email}.<br />
               Click the link in the email to sign in.
             </p>
             <p className="text-gray-400 text-sm">
               {formData.isArtist ? 
-                "After signing in, you'll be automatically redirected to complete your artist profile." :
-                "After signing in, you'll be automatically redirected to your dashboard."
+                "After signing in, you&apos;ll be automatically redirected to complete your artist profile." :
+                "After signing in, you&apos;ll be automatically redirected to your dashboard."
               }
             </p>
           </div>
@@ -107,7 +107,7 @@ export default function SignUp() {
               </div>
 
               <div className="text-sm text-gray-400">
-                We'll send you a magic link to sign in - no password needed!
+                We&apos;ll send you a magic link to sign in - no password needed!
               </div>
             </div>
 

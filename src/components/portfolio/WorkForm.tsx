@@ -39,9 +39,9 @@ export default function WorkForm({ initialData, onSubmit, onCancel }: WorkFormPr
 
     try {
       await onSubmit(formData)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting work:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     } finally {
       setLoading(false)
     }
@@ -72,9 +72,9 @@ export default function WorkForm({ initialData, onSubmit, onCancel }: WorkFormPr
       } else if (type === 'after') {
         setFormData(prev => ({ ...prev, after_image: filePath }))
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error uploading image:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     }
   }
 
@@ -93,9 +93,9 @@ export default function WorkForm({ initialData, onSubmit, onCancel }: WorkFormPr
           images: prev.images?.filter((_, i) => i !== index)
         }))
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error removing image:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     }
   }
 
@@ -249,110 +249,124 @@ export default function WorkForm({ initialData, onSubmit, onCancel }: WorkFormPr
             type="url"
             value={formData.video_url}
             onChange={e => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
-            placeholder="Enter YouTube or direct video URL"
             className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
           />
-          <p className="mt-1 text-sm text-gray-400">
-            Supported: YouTube, Vimeo, or direct MP4 links
-          </p>
         </div>
       </div>
 
-      {/* Media Uploads */}
-      <div className="glass-card p-6 rounded-xl space-y-6">
-        <h3 className="text-lg font-semibold text-violet-400">Media</h3>
+      {/* Image Upload Section */}
+      <div className="glass-card p-6 rounded-xl space-y-4">
+        <h3 className="text-lg font-semibold text-violet-400">Images</h3>
         
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            Images
+            Work Images
           </label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            {formData.images?.map((image, index) => (
-              <div key={index} className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden group">
-                <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${image}`}
-                  alt={`Work image ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-2 right-2 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-          <FileUpload onUpload={files => handleImageUpload(files, 'images')} accept="image/*" multiple />
+          <FileUpload
+            onUpload={files => handleImageUpload(files, 'images')}
+            accept="image/*"
+            multiple
+          />
+          {formData.images && formData.images.length > 0 && (
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {formData.images.map((image, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${image}`}
+                    alt={`Work image ${index + 1}`}
+                    className="w-full h-32 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Before Image (optional)
-          </label>
-          {formData.before_image && (
-            <div className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Before Image (optional)
+            </label>
+            <FileUpload
+              onUpload={files => handleImageUpload(files, 'before')}
+              accept="image/*"
+            />
+            {formData.before_image && (
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${formData.before_image}`}
                 alt="Before"
-                className="w-full h-full object-cover"
+                className="mt-2 w-full h-48 object-cover rounded-lg"
               />
-            </div>
-          )}
-          <FileUpload onUpload={files => handleImageUpload(files, 'before')} accept="image/*" />
-        </div>
+            )}
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            After Image (optional)
-          </label>
-          {formData.after_image && (
-            <div className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              After Image (optional)
+            </label>
+            <FileUpload
+              onUpload={files => handleImageUpload(files, 'after')}
+              accept="image/*"
+            />
+            {formData.after_image && (
               <img
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${formData.after_image}`}
                 alt="After"
-                className="w-full h-full object-cover"
+                className="mt-2 w-full h-48 object-cover rounded-lg"
               />
-            </div>
-          )}
-          <FileUpload onUpload={files => handleImageUpload(files, 'after')} accept="image/*" />
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Tags */}
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Tags
-        </label>
-        <div className="flex flex-wrap gap-2 mb-2">
-          {formData.tags?.map((tag, index) => (
-            <span
-              key={index}
-              className="bg-violet-600/30 text-violet-200 px-3 py-1 rounded-full text-sm flex items-center"
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => setFormData(prev => ({
-                  ...prev,
-                  tags: prev.tags?.filter((_, i) => i !== index)
-                }))}
-                className="ml-2 text-violet-300 hover:text-violet-100"
-              >
-                ×
-              </button>
-            </span>
-          ))}
+      {/* Tags Section */}
+      <div className="glass-card p-6 rounded-xl space-y-4">
+        <h3 className="text-lg font-semibold text-violet-400">Tags</h3>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Add Tags (press Enter to add)
+          </label>
+          <input
+            type="text"
+            onKeyDown={handleTagInput}
+            className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
+            placeholder="Type and press Enter to add tags"
+          />
+          {formData.tags && formData.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {formData.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="bg-violet-600/30 text-violet-200 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      tags: prev.tags?.filter((_, i) => i !== index)
+                    }))}
+                    className="text-violet-300 hover:text-white"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-        <input
-          type="text"
-          className="w-full bg-gray-800 text-white rounded-lg px-4 py-2"
-          placeholder="Add tags (press Enter)"
-          onKeyDown={handleTagInput}
-        />
       </div>
 
       {/* Form Actions */}
@@ -360,18 +374,20 @@ export default function WorkForm({ initialData, onSubmit, onCancel }: WorkFormPr
         <motion.button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2 rounded-lg text-sm font-medium bg-gray-800 text-white"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          className="px-6 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors"
         >
           Cancel
         </motion.button>
         <motion.button
           type="submit"
           disabled={loading}
-          className="glass-button px-6 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          className={`glass-button px-6 py-2 rounded-lg text-sm font-medium text-white ${
+            loading ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
           {loading ? 'Saving...' : 'Save Work'}
         </motion.button>

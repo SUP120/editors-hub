@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 
 type Profile = {
   full_name: string
@@ -65,6 +64,7 @@ type PaymentDetails = {
 }
 
 export default function ArtistDashboard() {
+  const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null)
   const [works, setWorks] = useState<Work[]>([])
@@ -88,13 +88,173 @@ export default function ArtistDashboard() {
   })
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'bank'>('upi')
   const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0)
-  const router = useRouter()
 
-  useEffect(() => {
-    checkUser()
+  const fetchData = useCallback(async (userId: string) => {
+    try {
+      type ProfileResponse = Profile & { id: string }
+      type ArtistProfileResponse = ArtistProfile & { id: string }
+      type WorkResponse = Work & { artist_id: string }
+
+      // Fetch basic profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single() as { data: ProfileResponse | null, error: any }
+
+      if (profileError) throw profileError
+      setProfile(profileData)
+
+      // Fetch artist profile
+      const { data: artistData, error: artistError } = await supabase
+        .from('artist_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single() as { data: ArtistProfileResponse | null, error: any }
+
+      if (artistError && artistError.code !== 'PGRST116') throw artistError
+      setArtistProfile(artistData)
+
+      // Fetch works
+      const { data: worksData, error: worksError } = await supabase
+        .from('works')
+        .select('*')
+        .eq('artist_id', userId)
+        .order('created_at', { ascending: false }) as { data: WorkResponse[] | null, error: any }
+
+      if (worksError) throw worksError
+      setWorks(worksData || [])
+    } catch (error) {
+      console.error('Error fetching data:', error)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+    }
   }, [])
 
-  const checkUser = async () => {
+  const fetchEarnings = useCallback(async (userId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      type EarningsResponse = {
+        artist_id: string
+        total_earned: number
+        pending_amount: number
+        last_payout_date: string | null
+      }
+
+      type OrderResponse = {
+        total_amount: number
+      }
+
+      // Get earnings data
+      const { data: earningsData, error: earningsError } = await supabase
+        .from('artist_earnings')
+        .select('*')
+        .eq('artist_id', user.id)
+        .single() as { data: EarningsResponse | null, error: any }
+
+      if (earningsError && earningsError.code !== 'PGRST116') throw earningsError
+
+      if (!earningsData) {
+        // Calculate earnings from completed orders
+        const { data: orders, error: ordersError } = await supabase
+          .from('orders')
+          .select('total_amount')
+          .eq('artist_id', user.id)
+          .eq('status', 'completed') as { data: OrderResponse[] | null, error: any }
+
+        if (ordersError) throw ordersError
+
+        const totalEarned = orders?.reduce((sum, order) => sum + (order.total_amount - 4), 0) || 0
+
+        // Create initial earnings record using RPC
+        const { error: insertError } = await supabase
+          .rpc('initialize_artist_earnings', {
+            p_artist_id: user.id,
+            p_total_earned: totalEarned
+          })
+
+        if (insertError) throw insertError
+
+        setEarnings({
+          total_earned: totalEarned,
+          pending_amount: totalEarned,
+          last_payout_date: null
+        })
+      } else {
+        setEarnings({
+          total_earned: earningsData.total_earned,
+          pending_amount: earningsData.pending_amount,
+          last_payout_date: earningsData.last_payout_date
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching earnings:', error)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+    }
+  }, [])
+
+  const fetchCompletedWorks = useCallback(async (userId: string) => {
+    try {
+      type OrderResponse = {
+        id: string
+        work_id: string
+        client_id: string
+        total_amount: number
+        created_at: string
+        transferred: boolean
+      }
+
+      type WorkResponse = {
+        title: string
+      }
+
+      type ClientResponse = {
+        full_name: string
+      }
+
+      const { data: orders, error: ordersError } = await supabase
+        .from('orders')
+        .select('id, work_id, client_id, total_amount, created_at, transferred')
+        .eq('artist_id', userId)
+        .eq('status', 'completed') as { data: OrderResponse[] | null, error: any }
+
+      if (ordersError) throw ordersError
+      if (!orders) return
+
+      const completedWorks = await Promise.all(
+        orders.map(async (order) => {
+          const { data: work } = await supabase
+            .from('works')
+            .select('title')
+            .eq('id', order.work_id)
+            .single() as { data: WorkResponse | null }
+
+          const { data: client } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', order.client_id)
+            .single() as { data: ClientResponse | null }
+
+          return {
+            id: order.id,
+            title: work?.title || 'Untitled Work',
+            price: order.total_amount,
+            completed_at: order.created_at,
+            client_name: client?.full_name || 'Anonymous Client',
+            transferred: order.transferred
+          }
+        })
+      )
+
+      setCompletedWorks(completedWorks)
+    } catch (error) {
+      console.error('Error fetching completed works:', error)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+    }
+  }, [])
+
+  const checkUser = useCallback(async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       if (authError) throw authError
@@ -123,145 +283,17 @@ export default function ArtistDashboard() {
         fetchEarnings(user.id),
         fetchCompletedWorks(user.id)
       ])
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error checking user:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     } finally {
       setLoading(false)
     }
-  }
+  }, [router, fetchData, fetchEarnings, fetchCompletedWorks])
 
-  const fetchData = async (userId: string) => {
-    try {
-      // Fetch basic profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      if (profileError) throw profileError
-      setProfile(profileData)
-
-      // Fetch artist profile
-      const { data: artistData, error: artistError } = await supabase
-        .from('artist_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      if (artistError && artistError.code !== 'PGRST116') throw artistError
-      setArtistProfile(artistData)
-
-      // Fetch works
-      const { data: worksData, error: worksError } = await supabase
-        .from('works')
-        .select('*')
-        .eq('artist_id', userId)
-        .order('created_at', { ascending: false })
-
-      if (worksError) throw worksError
-      setWorks(worksData || [])
-    } catch (error: any) {
-      console.error('Error fetching data:', error)
-      setError(error.message)
-    }
-  }
-
-  const fetchEarnings = async (userId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
-      // Get earnings data
-      const { data: earningsData, error: earningsError } = await supabase
-        .from('artist_earnings')
-        .select('*')
-        .eq('artist_id', user.id)
-        .single()
-
-      if (earningsError && earningsError.code !== 'PGRST116') throw earningsError
-
-      if (!earningsData) {
-        // Calculate earnings from completed orders
-        const { data: orders, error: ordersError } = await supabase
-          .from('orders')
-          .select('total_amount')
-          .eq('artist_id', user.id)
-          .eq('status', 'completed')
-
-        if (ordersError) throw ordersError
-
-        const totalEarned = orders?.reduce((sum, order) => sum + (order.total_amount - 4), 0) || 0
-
-        // Create initial earnings record using RPC
-        const { data: newEarnings, error: insertError } = await supabase
-          .rpc('initialize_artist_earnings', {
-            p_artist_id: user.id,
-            p_total_earned: totalEarned
-          })
-
-        if (insertError) throw insertError
-
-        setEarnings({
-          total_earned: totalEarned,
-          pending_amount: totalEarned,
-          last_payout_date: null
-        })
-      } else {
-        setEarnings({
-          total_earned: earningsData.total_earned,
-          pending_amount: earningsData.pending_amount,
-          last_payout_date: earningsData.last_payout_date
-        })
-      }
-    } catch (error: any) {
-      console.error('Error fetching earnings:', error)
-      setError(error.message)
-    }
-  }
-
-  const fetchCompletedWorks = async (userId: string) => {
-    try {
-      const { data: orders, error: ordersError } = await supabase
-        .from('orders')
-        .select('id, work_id, client_id, total_amount, created_at, transferred')
-        .eq('artist_id', userId)
-        .eq('status', 'completed')
-
-      if (ordersError) throw ordersError
-
-      const completedWorks = await Promise.all(
-        orders.map(async (order) => {
-          const { data: work } = await supabase
-            .from('works')
-            .select('title')
-            .eq('id', order.work_id)
-            .single()
-
-          const { data: client } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('id', order.client_id)
-            .single()
-
-          return {
-            id: order.id,
-            title: work?.title || 'Untitled Work',
-            price: order.total_amount - 4,
-            completed_at: order.created_at,
-            client_name: client?.full_name || 'Unknown Client',
-            transferred: order.transferred || false
-          }
-        })
-      )
-
-      setCompletedWorks(completedWorks)
-    } catch (error: any) {
-      console.error('Error fetching completed works:', error)
-      setError(error.message)
-    }
-  }
+  useEffect(() => {
+    checkUser()
+  }, [checkUser])
 
   const requestPayout = async () => {
     try {

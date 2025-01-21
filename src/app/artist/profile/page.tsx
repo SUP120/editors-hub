@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
@@ -11,20 +11,72 @@ import VideoPlayer from '@/components/portfolio/VideoPlayer'
 import type { Work, Profile, ArtistProfile } from '@/types'
 import { toast } from 'react-hot-toast'
 
+type SupabaseError = {
+  message: string
+  details: string
+  hint: string
+  code: string
+}
+
 export default function ArtistProfile() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string } | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null)
   const [works, setWorks] = useState<Work[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    checkUser()
+  const fetchWorks = useCallback(async (userId: string) => {
+    try {
+      type WorkResponse = Work & { artist_id: string }
+
+      const { data, error } = await supabase
+        .from('works')
+        .select('*')
+        .eq('artist_id', userId)
+        .neq('status', 'deleted')
+        .order('created_at', { ascending: false }) as { data: WorkResponse[] | null, error: SupabaseError | null }
+
+      if (error) throw error
+      setWorks(data || [])
+    } catch (error) {
+      console.error('Error fetching works:', error)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+    }
   }, [])
 
-  const checkUser = async () => {
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      type ProfileResponse = Profile & { id: string }
+      type ArtistProfileResponse = ArtistProfile & { id: string }
+
+      // Fetch basic profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single() as { data: ProfileResponse | null, error: SupabaseError | null }
+
+      if (profileError) throw profileError
+      setProfile(profileData)
+
+      // Fetch artist profile
+      const { data: artistData, error: artistError } = await supabase
+        .from('artist_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single() as { data: ArtistProfileResponse | null, error: SupabaseError | null }
+
+      if (artistError) throw artistError
+      setArtistProfile(artistData)
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+    }
+  }, [])
+
+  const checkUser = useCallback(async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       if (authError) throw authError
@@ -39,57 +91,17 @@ export default function ArtistProfile() {
         fetchProfile(user.id),
         fetchWorks(user.id)
       ])
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error:', error)
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
     } finally {
       setLoading(false)
     }
-  }
+  }, [router, fetchProfile, fetchWorks])
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      // Fetch basic profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      if (profileError) throw profileError
-      setProfile(profileData)
-
-      // Fetch artist profile
-      const { data: artistData, error: artistError } = await supabase
-        .from('artist_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-
-      if (artistError) throw artistError
-      setArtistProfile(artistData)
-    } catch (error: any) {
-      console.error('Error fetching profile:', error)
-      setError(error.message)
-    }
-  }
-
-  const fetchWorks = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('works')
-        .select('*')
-        .eq('artist_id', userId)
-        .neq('status', 'deleted')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setWorks(data || [])
-    } catch (error: any) {
-      console.error('Error fetching works:', error)
-      setError(error.message)
-    }
-  }
+  useEffect(() => {
+    checkUser()
+  }, [checkUser])
 
   const handleEditProfile = () => {
     router.push('/artist/edit-profile')
@@ -149,9 +161,9 @@ export default function ArtistProfile() {
       // Update local state
       setWorks(works.filter(work => work.id !== workId))
       toast.success('Work successfully deleted')
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting work:', error)
-      toast.error(error.message)
+      toast.error(error instanceof Error ? error.message : 'An unknown error occurred')
     }
   }
 
@@ -241,7 +253,7 @@ export default function ArtistProfile() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => fetchWorks(user.id)}
+                onClick={() => user && fetchWorks(user.id)}
                 className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300 hover:text-white transition-colors"
                 title="Refresh works"
               >
