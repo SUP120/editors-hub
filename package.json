@@ -1,0 +1,20 @@
+{
+  "name": "artist-hiring",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "CI=false DISABLE_ESLINT_PLUGIN=true DISABLE_TYPE_CHECK=true NODE_ENV=production next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.0",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "framer-motion": "^12.0.0",
+    "next": "^15.1.5",
+    "react-hot-toast": "^2.5.1",
+    "cross-env": "^7.0.3"
+  }
+}
