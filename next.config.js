@@ -6,17 +6,13 @@ const nextConfig = {
     unoptimized: true
   },
   typescript: {
-    ignoreBuildErrors: true,
-    tsconfigPath: './tsconfig.json'
+    ignoreBuildErrors: true
   },
   eslint: {
-    ignoreDuringBuilds: true,
-    dirs: ['pages', 'components', 'lib', 'src']
+    ignoreDuringBuilds: true
   },
   experimental: {
-    forceSwcTransforms: true,
-    esmExternals: false,
-    legacyBrowsers: false
+    forceSwcTransforms: true
   },
   swcMinify: false,
   productionBrowserSourceMaps: false,
