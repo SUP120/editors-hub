@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: false,
   images: {
-    domains: ['localhost', process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('https://', '')].filter(Boolean),
+    domains: ['localhost', 'xsgames.co'],
     unoptimized: true
   },
   typescript: {
@@ -31,4 +31,4 @@ const nextConfig = {
   skipTrailingSlashRedirect: true
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig
