@@ -89,28 +89,31 @@ export default function CompleteArtistProfile() {
           avatar_url: avatarUrl || null,
           bio: formData.bio,
           location: formData.location,
-          phone_number: formData.phoneNumber
+          phone_number: formData.phoneNumber,
+          updated_at: new Date().toISOString()
         })
         .eq('id', user.id)
       
       if (profileError) throw profileError
 
-      // Update artist profile
+      // Create artist profile
       const { error: artistError } = await supabase
         .from('artist_profiles')
-        .update({
+        .insert([{
+          id: user.id,
           specialty: formData.specialties.filter(s => s),
           skills: formData.skills.filter(s => s),
-          hourly_rate: parseFloat(formData.hourlyRate),
+          hourly_rate: parseFloat(formData.hourlyRate) || 0,
           portfolio_urls: formData.portfolioUrls.filter(url => url),
-          years_of_experience: parseInt(formData.yearsOfExperience),
+          years_of_experience: parseInt(formData.yearsOfExperience) || 0,
           education: formData.education.filter(edu => edu),
           certifications: formData.certifications.filter(cert => cert),
           languages: formData.languages.filter(lang => lang),
-          social_links: formData.socialLinks
-        })
-        .eq('id', user.id)
-      
+          social_links: formData.socialLinks,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+
       if (artistError) throw artistError
 
       router.push('/artist/dashboard')

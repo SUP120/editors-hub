@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
+import Image from 'next/image'
+import { FiRefreshCw, FiClock, FiDollarSign, FiPackage, FiUser, FiCheck, FiX, FiEye } from 'react-icons/fi'
 
 type Work = {
   title: string
@@ -51,13 +53,9 @@ export default function NotificationsPage() {
   const checkUser = async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError) {
-        console.error('Auth error:', authError)
-        throw authError
-      }
+      if (authError) throw authError
 
       if (!user) {
-        console.log('No user found, redirecting to signin')
         router.push('/auth/signin')
         return
       }
@@ -69,29 +67,22 @@ export default function NotificationsPage() {
         .eq('id', user.id)
         .single()
 
-      if (profileError) {
-        console.error('Profile error:', profileError)
-        throw profileError
-      }
+      if (profileError) throw profileError
 
       if (!profile?.is_artist) {
-        console.log('User is not an artist, redirecting to home')
         router.push('/')
         return
       }
 
-      console.log('Fetching notifications for artist:', user.id)
       await fetchNotifications(user.id)
     } catch (error: any) {
-      console.error('Error in checkUser:', error)
+      console.error('Error checking user:', error)
       setError(error.message)
     }
   }
 
   const fetchNotifications = async (userId: string) => {
     try {
-      console.log('Starting fetchNotifications for user:', userId)
-      
       // First fetch orders
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
@@ -99,12 +90,7 @@ export default function NotificationsPage() {
         .eq('artist_id', userId)
         .order('created_at', { ascending: false })
 
-      if (ordersError) {
-        console.error('Orders query error:', ordersError)
-        throw ordersError
-      }
-
-      console.log('Fetched orders:', ordersData)
+      if (ordersError) throw ordersError
 
       // Then fetch related data for each order
       const transformedData = await Promise.all(
@@ -140,8 +126,6 @@ export default function NotificationsPage() {
         })
       )
 
-      console.log('Transformed notifications:', transformedData)
-
       // Group by client
       const grouped = transformedData.reduce((acc: GroupedNotifications, notification: Notification) => {
         const clientId = notification.client_id
@@ -157,8 +141,8 @@ export default function NotificationsPage() {
 
       setNotifications(grouped)
     } catch (error: any) {
-      console.error('Error in fetchNotifications:', error)
-      setError(error.message || 'Failed to fetch notifications')
+      console.error('Error fetching notifications:', error)
+      setError(error.message)
     } finally {
       setLoading(false)
     }
@@ -166,16 +150,12 @@ export default function NotificationsPage() {
 
   const handleAction = async (orderId: string, action: 'accepted' | 'rejected') => {
     try {
-      console.log(`Handling ${action} action for order:`, orderId)
       const { error } = await supabase
         .from('orders')
         .update({ status: action })
         .eq('id', orderId)
 
-      if (error) {
-        console.error('Update error:', error)
-        throw error
-      }
+      if (error) throw error
 
       // Refresh notifications
       const { data: { user } } = await supabase.auth.getUser()
@@ -190,7 +170,7 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-violet-500"></div>
       </div>
     )
@@ -198,132 +178,232 @@ export default function NotificationsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
-        <div className="glass-card rounded-xl p-6 text-center">
-          <p className="text-red-500">Error: {error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 glass-button px-4 py-2 rounded-lg text-sm font-medium text-white"
-          >
-            Try Again
-          </button>
-        </div>
+      <div className="min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
+          <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl text-center">
+            <p className="text-red-400 mb-4">Error: {error}</p>
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => window.location.reload()} 
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium
+                       hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all"
+            >
+              Try Again
+            </motion.button>
+          </div>
+        </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
+    <div className="min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Notifications</h1>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setLoading(true)
-              checkUser()
-            }}
-            className="glass-button px-4 py-2 rounded-lg text-sm font-medium text-white flex items-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-            </svg>
-            Refresh
-          </motion.button>
-        </div>
-
-        <div className="space-y-8">
-          {Object.keys(notifications).length === 0 ? (
-            <div className="glass-card rounded-xl p-6 text-center">
-              <p className="text-gray-300">No notifications at the moment.</p>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative mb-8"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
+          <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl">
+            <div className="flex justify-between items-center">
+              <h1 className="text-3xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-400">
+                Notifications
+              </h1>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setLoading(true)
+                  checkUser()
+                }}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-gray-300 hover:text-white transition-all
+                         border border-white/10 backdrop-blur-sm flex items-center gap-2"
+              >
+                <FiRefreshCw className="w-5 h-5" />
+                Refresh
+              </motion.button>
             </div>
-          ) : (
-            Object.entries(notifications).map(([clientId, { clientName, notifications: clientNotifications }]) => (
-              <div key={clientId} className="glass-card rounded-xl p-6">
-                <h2 className="text-2xl font-semibold text-white mb-6">Orders from {clientName}</h2>
-                <div className="space-y-4">
-                  {clientNotifications.map((notification) => (
-                    <motion.div
-                      key={notification.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-gray-800/50 rounded-lg p-4"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h3 className="text-xl font-semibold text-white">{notification.work.title}</h3>
-                          <p className="text-gray-400">₹{notification.total_amount}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            notification.status === 'pending'
-                              ? 'bg-yellow-500'
-                              : notification.status === 'accepted'
-                              ? 'bg-green-500'
-                              : notification.status === 'completed'
-                              ? 'bg-blue-500'
-                              : 'bg-red-500'
-                          } text-white`}>
-                            {notification.status.toUpperCase()}
-                          </span>
-                          {notification.payment_status === 'completed' && (
-                            <span className="px-2 py-1 rounded-full text-xs bg-green-500 text-white">
-                              PAID
-                            </span>
-                          )}
-                        </div>
-                      </div>
+          </div>
+        </motion.div>
 
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm text-gray-400">
-                          {new Date(notification.created_at).toLocaleDateString('en-IN', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </p>
-
-                        <div className="flex space-x-4">
-                          {notification.status === 'pending' && (
-                            <>
-                              <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => handleAction(notification.id, 'accepted')}
-                                className="glass-button px-4 py-2 rounded-lg text-sm font-medium text-white"
-                              >
-                                Accept
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => handleAction(notification.id, 'rejected')}
-                                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600"
-                              >
-                                Reject
-                              </motion.button>
-                            </>
-                          )}
-                          {notification.status === 'accepted' && notification.payment_status === 'completed' && (
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => router.push(`/orders/${notification.id}`)}
-                              className="glass-button px-4 py-2 rounded-lg text-sm font-medium text-white"
-                            >
-                              View Order
-                            </motion.button>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+        <AnimatePresence>
+          {Object.keys(notifications).length === 0 ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
+              <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl text-center">
+                <p className="text-gray-300">No notifications at the moment.</p>
               </div>
-            ))
+            </motion.div>
+          ) : (
+            <div className="space-y-8">
+              {Object.entries(notifications).map(([clientId, { clientName, notifications: clientNotifications }], index) => (
+                <motion.div
+                  key={clientId}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="relative"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-2xl blur-xl" />
+                  <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 shadow-xl">
+                    <h2 className="text-2xl font-semibold text-white bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-400 mb-6">
+                      Orders from {clientName}
+                    </h2>
+                    <div className="space-y-4">
+                      {clientNotifications.map((notification, notificationIndex) => (
+                        <motion.div
+                          key={notification.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: notificationIndex * 0.05 }}
+                          className="relative group"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-400/5 to-indigo-400/5 rounded-xl blur-lg" />
+                          <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-6 shadow-xl
+                                      hover:bg-white/10 transition-all duration-300">
+                            <div className="flex items-start gap-6">
+                              {notification.work.images?.[0] ? (
+                                <div className="relative w-32 h-32 rounded-xl overflow-hidden flex-shrink-0">
+                                  <Image
+                                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${notification.work.images[0]}`}
+                                    alt={notification.work.title}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-32 h-32 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                                  <FiPackage className="w-8 h-8 text-gray-400" />
+                                </div>
+                              )}
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-4">
+                                  <div>
+                                    <h3 className="text-xl font-semibold text-white group-hover:text-violet-400 transition-colors">
+                                      {notification.work.title}
+                                    </h3>
+                                    <div className="flex items-center gap-2 text-gray-400 mt-1">
+                                      <FiUser className="w-4 h-4" />
+                                      <span>{notification.client.full_name}</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <div className={`px-3 py-1 rounded-xl text-xs font-medium backdrop-blur-sm
+                                                ${notification.status === 'pending'
+                                                  ? 'bg-yellow-400/10 text-yellow-300 border border-yellow-400/20'
+                                                  : notification.status === 'accepted'
+                                                  ? 'bg-green-400/10 text-green-300 border border-green-400/20'
+                                                  : notification.status === 'completed'
+                                                  ? 'bg-blue-400/10 text-blue-300 border border-blue-400/20'
+                                                  : 'bg-red-400/10 text-red-300 border border-red-400/20'
+                                                }`}>
+                                      {notification.status.toUpperCase()}
+                                    </div>
+                                    {notification.payment_status === 'completed' && (
+                                      <div className="bg-emerald-400/10 text-emerald-300 px-3 py-1 rounded-xl text-xs font-medium
+                                                    border border-emerald-400/20 backdrop-blur-sm flex items-center gap-1">
+                                        <FiCheck className="w-3 h-3" />
+                                        PAID
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                                  <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10">
+                                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                                      <FiClock className="w-4 h-4" />
+                                      <span>Order Date</span>
+                                    </div>
+                                    <p className="text-white">
+                                      {new Date(notification.created_at).toLocaleDateString('en-IN', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                      })}
+                                    </p>
+                                  </div>
+                                  <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10">
+                                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                                      <FiDollarSign className="w-4 h-4" />
+                                      <span>Amount</span>
+                                    </div>
+                                    <p className="text-white">₹{notification.total_amount}</p>
+                                  </div>
+                                  <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10">
+                                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                                      <FiUser className="w-4 h-4" />
+                                      <span>Client</span>
+                                    </div>
+                                    <p className="text-white">{notification.client.full_name}</p>
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-end gap-4">
+                                  {notification.status === 'pending' && (
+                                    <>
+                                      <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => handleAction(notification.id, 'accepted')}
+                                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl text-white font-medium
+                                                 hover:from-green-600 hover:to-emerald-600 transform hover:-translate-y-0.5 transition-all
+                                                 flex items-center gap-2"
+                                      >
+                                        <FiCheck className="w-4 h-4" />
+                                        Accept
+                                      </motion.button>
+                                      <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => handleAction(notification.id, 'rejected')}
+                                        className="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-500 rounded-xl text-white font-medium
+                                                 hover:from-red-600 hover:to-rose-600 transform hover:-translate-y-0.5 transition-all
+                                                 flex items-center gap-2"
+                                      >
+                                        <FiX className="w-4 h-4" />
+                                        Reject
+                                      </motion.button>
+                                    </>
+                                  )}
+                                  {notification.status === 'accepted' && notification.payment_status === 'completed' && (
+                                    <motion.button
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                      onClick={() => router.push(`/orders/${notification.id}`)}
+                                      className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium
+                                               hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all
+                                               flex items-center gap-2"
+                                    >
+                                      <FiEye className="w-4 h-4" />
+                                      View Order
+                                    </motion.button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
     </div>
   )

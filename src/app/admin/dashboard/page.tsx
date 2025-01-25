@@ -1,20 +1,33 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import { toast } from 'react-hot-toast'
+
+type Violation = {
+  artist_id: string
+  order_id: string
+  reason: string
+  created_at: string
+  profiles: {
+    full_name: string
+    email: string
+  }
+}
 
 type FlaggedArtist = {
   id: string
   full_name: string
   email: string
   violation_count: number
-  violations: {
+  violations: Array<{
     order_id: string
     reason: string
     created_at: string
-  }[]
+  }>
 }
 
 type PaymentRequest = {
@@ -24,14 +37,79 @@ type PaymentRequest = {
   amount: number
   status: string
   requested_at: string
+  payment_type: 'upi' | 'bank'
+  payment_details: {
+    upi_id?: string
+    bank_name?: string
+    account_number?: string
+    ifsc_code?: string
+    account_holder_name?: string
+  }
 }
 
-type SupabaseError = {
-  message: string
-  details: string
-  hint: string
-  code: string
+type Artist = {
+  id: string
+  full_name: string
+  email: string
+  created_at: string
+  is_artist: boolean
+  total_earnings?: number
+  total_orders?: number
+  rating?: number
 }
+
+type Client = {
+  id: string
+  full_name: string
+  email: string
+  created_at: string
+  total_orders?: number
+}
+
+type Issue = {
+  id: string
+  artist_id: string
+  order_id: string
+  incident_type: string
+  description: string
+  reported_at: string
+  resolved: boolean
+  artist: {
+    full_name: string
+    email: string
+  }
+}
+
+type DatabasePayoutRequest = {
+  id: string;
+  artist_id: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  payment_type: 'upi' | 'bank';
+  profiles: {
+    full_name: string;
+  };
+};
+
+type PayoutRequest = {
+  id: string;
+  artist_id: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  payment_type: 'upi' | 'bank';
+  profiles: Array<{
+    full_name: string;
+  }>;
+  payment_details: Array<{
+    upi_id?: string;
+    bank_name?: string;
+    account_number?: string;
+    ifsc_code?: string;
+    account_holder_name?: string;
+  }>;
+};
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -39,20 +117,54 @@ export default function AdminDashboard() {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [artists, setArtists] = useState<Artist[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [issues, setIssues] = useState<Issue[]>([])
+  const [activeTab, setActiveTab] = useState('artists')
+
+  useEffect(() => {
+    checkAdmin()
+    fetchData()
+  }, [])
+
+  const checkAdmin = async () => {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError) throw authError
+
+      if (!user) {
+        router.push('/auth/signin')
+        return
+      }
+
+      // Check if user is an admin
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) throw profileError
+
+      if (!profile?.is_admin) {
+        router.push('/')
+        return
+      }
+
+      await Promise.all([
+        fetchFlaggedArtists(),
+        fetchPaymentRequests()
+      ])
+    } catch (error: any) {
+      console.error('Error checking admin:', error)
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchFlaggedArtists = async () => {
     try {
-      type ViolationResponse = {
-        artist_id: string
-        order_id: string
-        reason: string
-        created_at: string
-        profiles: {
-          full_name: string
-          email: string
-        } | null
-      }
-
       // Get all violations grouped by artist
       const { data: violations, error: violationsError } = await supabase
         .from('artist_violations')
@@ -66,13 +178,12 @@ export default function AdminDashboard() {
             email
           )
         `)
-        .order('created_at', { ascending: false }) as { data: ViolationResponse[] | null, error: SupabaseError | null }
+        .order('created_at', { ascending: false })
 
       if (violationsError) throw violationsError
-      if (!violations) return
 
       // Group violations by artist
-      const artistViolations = violations.reduce((acc: Record<string, FlaggedArtist>, violation) => {
+      const artistViolations = (violations as any[]).reduce<{ [key: string]: FlaggedArtist }>((acc, violation) => {
         const artistId = violation.artist_id
         if (!acc[artistId]) {
           acc[artistId] = {
@@ -93,25 +204,14 @@ export default function AdminDashboard() {
       }, {})
 
       setFlaggedArtists(Object.values(artistViolations))
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching flagged artists:', error)
-      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+      setError(error.message)
     }
   }
 
   const fetchPaymentRequests = async () => {
     try {
-      type RequestResponse = {
-        id: string
-        artist_id: string
-        amount: number
-        status: string
-        requested_at: string
-        profiles: {
-          full_name: string
-        } | null
-      }
-
       const { data: requests, error: requestsError } = await supabase
         .from('payment_requests')
         .select(`
@@ -120,70 +220,40 @@ export default function AdminDashboard() {
           amount,
           status,
           requested_at,
-          profiles!artist_id (
+          payment_type,
+          profiles!inner (
             full_name
+          ),
+          payment_details!payment_requests_id_fkey (
+            upi_id,
+            bank_name,
+            account_number,
+            ifsc_code,
+            account_holder_name
           )
         `)
-        .order('requested_at', { ascending: false }) as { data: RequestResponse[] | null, error: SupabaseError | null }
+        .order('requested_at', { ascending: false })
 
       if (requestsError) throw requestsError
-      if (!requests) return
 
-      const transformedRequests = requests.map(request => ({
+      const transformedRequests = requests.map((request: PayoutRequest): PaymentRequest => ({
         id: request.id,
         artist_id: request.artist_id,
-        artist_name: request.profiles?.full_name || 'Unknown Artist',
+        artist_name: request.profiles[0]?.full_name || 'Unknown Artist',
         amount: request.amount,
         status: request.status,
-        requested_at: request.requested_at
+        requested_at: request.requested_at,
+        payment_type: request.payment_type,
+        payment_details: request.payment_details?.[0] || {}
       }))
 
       setPaymentRequests(transformedRequests)
-    } catch (error) {
+      console.log('Payment requests:', transformedRequests) // Debug log
+    } catch (error: any) {
       console.error('Error fetching payment requests:', error)
-      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+      setError(error.message)
     }
   }
-
-  const checkAdmin = useCallback(async () => {
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-
-      if (!user) {
-        router.push('/auth/signin')
-        return
-      }
-
-      // Check if user is an admin
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single() as { data: { is_admin: boolean } | null, error: SupabaseError | null }
-
-      if (profileError) throw profileError
-
-      if (!profile?.is_admin) {
-        router.push('/')
-        return
-      }
-
-      await Promise.all([
-        fetchFlaggedArtists(),
-        fetchPaymentRequests()
-      ])
-    } catch (error) {
-      console.error('Error checking admin:', error)
-      setError(error instanceof Error ? error.message : 'An unknown error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }, [router])
-
-  useEffect(() => {
-    checkAdmin()
-  }, [checkAdmin])
 
   const handlePaymentAction = async (requestId: string, action: 'approved' | 'rejected') => {
     try {
@@ -199,9 +269,9 @@ export default function AdminDashboard() {
 
       // Refresh payment requests
       await fetchPaymentRequests()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error handling payment action:', error)
-      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+      setError(error.message)
     }
   }
 
@@ -220,18 +290,137 @@ export default function AdminDashboard() {
 
       // Refresh flagged artists
       await fetchFlaggedArtists()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error banning artist:', error)
-      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+      setError(error.message)
+    }
+  }
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+
+      // Fetch artists with their stats
+      const { data: artistsData, error: artistsError } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          artist_wallet(current_balance, total_earned),
+          orders(id),
+          artist_profiles(rating)
+        `)
+        .eq('is_artist', true)
+
+      if (artistsError) throw artistsError
+
+      // Fetch clients with their orders
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('profiles')
+        .select('*, orders(id)')
+        .eq('is_artist', false)
+
+      if (clientsError) throw clientsError
+
+      // Fetch unresolved issues
+      const { data: issuesData, error: issuesError } = await supabase
+        .from('artist_incidents')
+        .select(`
+          *,
+          artist:profiles!artist_id(
+            full_name,
+            email
+          )
+        `)
+        .eq('resolved', false)
+        .order('reported_at', { ascending: false })
+
+      if (issuesError) throw issuesError
+
+      // Process artists data
+      const processedArtists = artistsData?.map(artist => ({
+        ...artist,
+        total_earnings: artist.artist_wallet?.[0]?.total_earned || 0,
+        total_orders: artist.orders?.length || 0,
+        rating: artist.artist_profiles?.[0]?.rating || 0
+      })) || []
+
+      // Process clients data
+      const processedClients = clientsData?.map(client => ({
+        ...client,
+        total_orders: client.orders?.length || 0
+      })) || []
+
+      // Fetch payout requests
+      const { data: payoutsData, error: payoutsError } = await supabase
+        .from('payout_requests')
+        .select('id, artist_id, amount, status, requested_at, payment_type, profiles')
+        .eq('status', 'pending')
+
+      if (payoutsError) throw payoutsError
+
+      // Fetch payment details
+      const { data: paymentDetailsData, error: paymentDetailsError } = await supabase
+        .from('payment_details')
+        .select('id, artist_id, upi_id, bank_name, account_number, ifsc_code, account_holder_name')
+        .eq('artist_id', payoutsData.map(payout => payout.artist_id))
+
+      if (paymentDetailsError) throw paymentDetailsError
+
+      // Process payout requests
+      const payoutRequests = (payoutsData as DatabasePayoutRequest[]).map(payout => {
+        const paymentDetails = paymentDetailsData?.find(pd => pd.artist_id === payout.artist_id);
+        return {
+          id: payout.id,
+          artist_id: payout.artist_id,
+          artist_name: payout.profiles?.full_name || 'Unknown Artist',
+          amount: payout.amount,
+          status: payout.status,
+          requested_at: payout.requested_at,
+          payment_type: payout.payment_type,
+          payment_details: {
+            upi_id: paymentDetails?.upi_id,
+            bank_name: paymentDetails?.bank_name,
+            account_number: paymentDetails?.account_number,
+            ifsc_code: paymentDetails?.ifsc_code,
+            account_holder_name: paymentDetails?.account_holder_name
+          }
+        };
+      });
+
+      setArtists(processedArtists)
+      setClients(processedClients)
+      setIssues(issuesData || [])
+      setPaymentRequests(payoutRequests)
+    } catch (error: any) {
+      console.error('Error fetching data:', error)
+      toast.error('Failed to fetch data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resolveIssue = async (issueId: string) => {
+    try {
+      const { error } = await supabase
+        .from('artist_incidents')
+        .update({
+          resolved: true,
+          resolved_at: new Date().toISOString()
+        })
+        .eq('id', issueId)
+
+      if (error) throw error
+
+      toast.success('Issue marked as resolved')
+      fetchData()
+    } catch (error: any) {
+      console.error('Error resolving issue:', error)
+      toast.error('Failed to resolve issue')
     }
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-violet-500"></div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen text="Loading admin dashboard..." />
   }
 
   if (error) {
@@ -271,119 +460,212 @@ export default function AdminDashboard() {
           </motion.button>
         </div>
 
-        {/* Flagged Artists Section */}
-        <div className="glass-card rounded-xl p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-white mb-6">Flagged Artists</h2>
-          {flaggedArtists.length === 0 ? (
-            <p className="text-gray-400">No flagged artists at the moment.</p>
-          ) : (
-            <div className="space-y-6">
-              {flaggedArtists.map((artist) => (
-                <motion.div
-                  key={artist.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-gray-800/50 rounded-lg p-4"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{artist.full_name}</h3>
-                      <p className="text-gray-400">{artist.email}</p>
-                      <p className="text-red-400 mt-1">
-                        {artist.violation_count} violation{artist.violation_count !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => banArtist(artist.id)}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600"
-                    >
-                      Ban Artist
-                    </motion.button>
-                  </div>
-
-                  <div className="space-y-2">
-                    {artist.violations.map((violation, index) => (
-                      <div key={index} className="text-sm text-gray-400">
-                        <p className="text-gray-300">Order: {violation.order_id}</p>
-                        <p>{violation.reason}</p>
-                        <p className="text-xs">
-                          {new Date(violation.created_at).toLocaleDateString('en-IN', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
+        {/* Navigation Tabs */}
+        <div className="flex space-x-4 mb-6">
+          {['artists', 'clients', 'issues'].map((tabName) => (
+            <button
+              key={tabName}
+              onClick={() => setActiveTab(tabName)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                ${activeTab === tabName
+                  ? 'bg-white text-purple-900'
+                  : 'bg-gray-800 text-white hover:bg-gray-700'
+                }`}
+            >
+              {tabName.charAt(0).toUpperCase() + tabName.slice(1)}
+            </button>
+          ))}
         </div>
 
-        {/* Payment Requests Section */}
-        <div className="glass-card rounded-xl p-6">
-          <h2 className="text-2xl font-semibold text-white mb-6">Payment Requests</h2>
-          {paymentRequests.length === 0 ? (
-            <p className="text-gray-400">No payment requests at the moment.</p>
-          ) : (
-            <div className="space-y-4">
-              {paymentRequests.map((request) => (
-                <motion.div
-                  key={request.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-gray-800/50 rounded-lg p-4"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{request.artist_name}</h3>
-                      <p className="text-violet-400">₹{request.amount}</p>
-                      <p className="text-sm text-gray-400">
-                        {new Date(request.requested_at).toLocaleDateString('en-IN', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </p>
-                    </div>
-
-                    {request.status === 'pending' && (
-                      <div className="flex space-x-4">
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => handlePaymentAction(request.id, 'approved')}
-                          className="glass-button px-4 py-2 rounded-lg text-sm font-medium text-white"
-                        >
-                          Approve
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => handlePaymentAction(request.id, 'rejected')}
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600"
-                        >
-                          Reject
-                        </motion.button>
-                      </div>
-                    )}
-
-                    {request.status !== 'pending' && (
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        request.status === 'approved' ? 'bg-green-500' : 'bg-red-500'
-                      } text-white`}>
-                        {request.status.toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
+        {/* Content Sections */}
+        {activeTab === 'artists' && (
+          <div className="bg-gray-800 bg-opacity-50 rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-4">Artists ({artists.length})</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-700">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Total Earnings</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Orders</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Rating</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {artists.map((artist) => (
+                    <tr key={artist.id} className="hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{artist.full_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{artist.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">₹{artist.total_earnings}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{artist.total_orders}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{artist.rating?.toFixed(1)} ⭐</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {new Date(artist.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
+        )}
+
+        {activeTab === 'clients' && (
+          <div className="bg-gray-800 bg-opacity-50 rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-4">Clients ({clients.length})</h2>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-700">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Total Orders</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {clients.map((client) => (
+                    <tr key={client.id} className="hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{client.full_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{client.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{client.total_orders}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {new Date(client.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'issues' && (
+          <div className="bg-gray-800 bg-opacity-50 rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-4">Unresolved Issues ({issues.length})</h2>
+            <div className="space-y-4">
+              {issues.map((issue) => (
+                <div key={issue.id} className="bg-gray-700 rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-white font-medium">{issue.incident_type}</h3>
+                      <p className="text-gray-300 text-sm mt-1">{issue.description}</p>
+                      <div className="mt-2 text-sm text-gray-400">
+                        <p>Artist: {issue.artist.full_name} ({issue.artist.email})</p>
+                        <p>Reported: {new Date(issue.reported_at).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => resolveIssue(issue.id)}
+                      className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-500"
+                    >
+                      Mark Resolved
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {issues.length === 0 && (
+                <p className="text-gray-400 text-center py-4">No unresolved issues</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Payment Requests Section */}
+        <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl">
+          <h2 className="text-2xl font-bold text-white mb-6">Payment Requests</h2>
+          <div className="space-y-4">
+            {paymentRequests.map((request) => (
+              <motion.div
+                key={request.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="group hover:bg-white/10 p-6 rounded-xl transition-all duration-200 border border-white/10"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-medium text-white group-hover:text-purple-400 transition-colors">
+                      {request.artist_name}
+                    </h3>
+                    <p className="text-gray-400">
+                      Requested on {new Date(request.requested_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-white">₹{request.amount}</p>
+                    <p className={`text-sm ${
+                      request.status === 'pending' ? 'text-yellow-400' :
+                      request.status === 'approved' ? 'text-green-400' :
+                      'text-red-400'
+                    }`}>
+                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="bg-black/20 rounded-xl p-4 mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-purple-400">Payment Method:</span>
+                    <span className="text-white">{request.payment_type === 'upi' ? 'UPI' : 'Bank Transfer'}</span>
+                  </div>
+                  
+                  {request.payment_type === 'upi' ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-purple-400">UPI ID:</span>
+                      <span className="text-white">{request.payment_details.upi_id}</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-purple-400">Account Holder:</span>
+                        <span className="text-white">{request.payment_details.account_holder_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-purple-400">Bank Name:</span>
+                        <span className="text-white">{request.payment_details.bank_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-purple-400">Account Number:</span>
+                        <span className="text-white">{request.payment_details.account_number}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-purple-400">IFSC Code:</span>
+                        <span className="text-white">{request.payment_details.ifsc_code}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {request.status === 'pending' && (
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => handlePaymentAction(request.id, 'approved')}
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl text-white font-medium
+                                hover:from-green-600 hover:to-emerald-600 transition-colors"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handlePaymentAction(request.id, 'rejected')}
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-xl text-white font-medium
+                                hover:from-red-600 hover:to-pink-600 transition-colors"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+
+            {paymentRequests.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-gray-400">No payment requests</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

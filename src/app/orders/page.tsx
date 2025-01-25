@@ -1,9 +1,11 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
+import Image from 'next/image'
+import { FiRefreshCw, FiClock, FiDollarSign, FiPackage, FiUser, FiChevronRight, FiCheck, FiCreditCard } from 'react-icons/fi'
 
 type Work = {
   title: string
@@ -38,42 +40,37 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const fetchOrders = useCallback(async (userId: string) => {
+  useEffect(() => {
+    checkUser()
+  }, [])
+
+  const checkUser = async () => {
     try {
-      type OrderResponse = {
-        id: string
-        work_id: string
-        client_id: string
-        artist_id: string
-        status: string
-        payment_status: string
-        requirements: string
-        total_amount: number
-        created_at: string
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError) throw authError
+
+      if (!user) {
+        router.push('/auth/signin')
+        return
       }
 
-      type WorkResponse = {
-        title: string
-        images: string[]
-        price: number
-        description: string
-      }
+      await fetchOrders(user.id)
+    } catch (error: any) {
+      console.error('Error checking user:', error)
+      setError(error.message)
+    }
+  }
 
-      type ArtistResponse = {
-        id: string
-        full_name: string
-        email: string
-      }
-
+  const fetchOrders = async (userId: string) => {
+    try {
       // First fetch orders
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*')
         .eq('client_id', userId)
-        .order('created_at', { ascending: false }) as { data: OrderResponse[] | null, error: any }
+        .order('created_at', { ascending: false })
 
       if (ordersError) throw ordersError
-      if (!ordersData) return
 
       // Then fetch related data for each order
       const transformedOrders = await Promise.all(
@@ -83,14 +80,14 @@ export default function OrdersPage() {
             .from('works')
             .select('title, images, price, description')
             .eq('id', order.work_id)
-            .single() as { data: WorkResponse | null }
+            .single()
 
           // Fetch artist details
           const { data: artistData } = await supabase
             .from('profiles')
             .select('id, full_name, email')
             .eq('id', order.artist_id)
-            .single() as { data: ArtistResponse | null }
+            .single()
 
           return {
             ...order,
@@ -110,38 +107,17 @@ export default function OrdersPage() {
       )
 
       setOrders(transformedOrders)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching orders:', error)
-      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+      setError(error.message)
     } finally {
       setLoading(false)
     }
-  }, [])
-
-  const checkUser = useCallback(async () => {
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-
-      if (!user) {
-        router.push('/auth/signin')
-        return
-      }
-
-      await fetchOrders(user.id)
-    } catch (error) {
-      console.error('Error checking user:', error)
-      setError(error instanceof Error ? error.message : 'An unknown error occurred')
-    }
-  }, [router, fetchOrders])
-
-  useEffect(() => {
-    checkUser()
-  }, [checkUser])
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-violet-500"></div>
       </div>
     )
@@ -149,112 +125,208 @@ export default function OrdersPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
-        <div className="glass-card rounded-xl p-6 text-center">
-          <p className="text-red-500">Error: {error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 glass-button px-4 py-2 rounded-lg text-sm font-medium text-white"
-          >
-            Try Again
-          </button>
-        </div>
+      <div className="min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
+          <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl text-center">
+            <p className="text-red-400 mb-4">Error: {error}</p>
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => window.location.reload()} 
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium
+                       hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all"
+            >
+              Try Again
+            </motion.button>
+          </div>
+        </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">My Orders</h1>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setLoading(true)
-              checkUser()
-            }}
-            className="glass-button px-4 py-2 rounded-lg text-sm font-medium text-white flex items-center gap-2"
+    <div className="min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-violet-900/50 to-[#0f172a]"></div>
+        <div className="relative max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative mb-8"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-            </svg>
-            Refresh
-          </motion.button>
-        </div>
-
-        {orders.length === 0 ? (
-          <div className="glass-card rounded-xl p-6 text-center">
-            <p className="text-gray-300">You haven't placed any orders yet.</p>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => router.push('/browse-works')}
-              className="mt-4 glass-button px-4 py-2 rounded-lg text-sm font-medium text-white"
-            >
-              Browse Works
-            </motion.button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {orders.map((order) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card rounded-xl p-6"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-xl font-semibold text-white">{order.work.title}</h2>
-                    <p className="text-gray-400">Artist: {order.artist.full_name}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      order.status === 'pending'
-                        ? 'bg-yellow-500'
-                        : order.status === 'accepted'
-                        ? 'bg-green-500'
-                        : order.status === 'completed'
-                        ? 'bg-blue-500'
-                        : 'bg-red-500'
-                    } text-white`}>
-                      {order.status.toUpperCase()}
-                    </span>
-                    {order.payment_status === 'completed' && (
-                      <span className="px-2 py-1 rounded-full text-xs bg-green-500 text-white">
-                        PAID
-                      </span>
-                    )}
-                  </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
+            <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-400">
+                    My Orders
+                  </h1>
+                  <p className="text-gray-400 mt-2">Track and manage your creative projects</p>
                 </div>
-
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-violet-400">₹{order.total_amount}</p>
-                    <p className="text-sm text-gray-400">
-                      {new Date(order.created_at).toLocaleDateString('en-IN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </p>
-                  </div>
-
+                <div className="flex items-center gap-4">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => router.push(`/orders/${order.id}`)}
-                    className="glass-button px-4 py-2 rounded-lg text-sm font-medium text-white"
+                    onClick={() => router.push('/browse-works')}
+                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium
+                             hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all"
                   >
-                    View Details
+                    Order New Work
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setLoading(true)
+                      checkUser()
+                    }}
+                    className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-gray-300 hover:text-white transition-all
+                             border border-white/10 backdrop-blur-sm flex items-center gap-2"
+                  >
+                    <FiRefreshCw className="w-5 h-5" />
+                    Refresh
                   </motion.button>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <AnimatePresence>
+          {orders.length === 0 ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
+              <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl text-center">
+                <div className="mb-6">
+                  <FiPackage className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-300">You haven't placed any orders yet.</p>
+                  <p className="text-gray-400 text-sm mt-2">Start by browsing our talented artists' works.</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => router.push('/browse-works')}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium
+                           hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all"
+                >
+                  Browse Works
+                </motion.button>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="space-y-6">
+              {orders.map((order, index) => (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => router.push(`/orders/${order.id}`)}
+                  className="relative group cursor-pointer"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-2xl blur-xl" />
+                  <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 shadow-xl
+                               hover:bg-white/10 transition-all duration-300">
+                    <div className="flex flex-col md:flex-row items-start gap-6">
+                      {order.work.images?.[0] ? (
+                        <div className="relative w-full md:w-32 h-32 rounded-xl overflow-hidden flex-shrink-0">
+                          <Image
+                            src={order.work.images[0].startsWith('http') 
+                              ? order.work.images[0] 
+                              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${order.work.images[0]}`}
+                            alt={order.work.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 128px"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full md:w-32 h-32 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                          <FiPackage className="w-8 h-8 text-gray-400" />
+                        </div>
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+                          <div>
+                            <h2 className="text-xl font-semibold text-white group-hover:text-violet-400 transition-colors">
+                              {order.work.title}
+                            </h2>
+                            <div className="flex items-center gap-2 text-gray-400 mt-1">
+                              <FiUser className="w-4 h-4" />
+                              <span>{order.artist.full_name}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <div className={`px-3 py-1 rounded-xl text-xs font-medium backdrop-blur-sm flex items-center gap-2
+                                        ${order.status === 'pending'
+                                          ? 'bg-yellow-400/10 text-yellow-300 border border-yellow-400/20'
+                                          : order.status === 'accepted'
+                                          ? 'bg-green-400/10 text-green-300 border border-green-400/20'
+                                          : order.status === 'completed'
+                                          ? 'bg-blue-400/10 text-blue-300 border border-blue-400/20'
+                                          : 'bg-red-400/10 text-red-300 border border-red-400/20'
+                                        }`}
+                            >
+                              {order.status === 'completed' && <FiCheck className="w-3 h-3" />}
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </div>
+                            <div className={`px-3 py-1 rounded-xl text-xs font-medium backdrop-blur-sm flex items-center gap-2
+                                        ${order.payment_status === 'pending'
+                                          ? 'bg-yellow-400/10 text-yellow-300 border border-yellow-400/20'
+                                          : order.payment_status === 'completed'
+                                          ? 'bg-green-400/10 text-green-300 border border-green-400/20'
+                                          : 'bg-red-400/10 text-red-300 border border-red-400/20'
+                                        }`}
+                            >
+                              <FiCreditCard className="w-3 h-3" />
+                              {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10">
+                            <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                              <FiDollarSign className="w-4 h-4" />
+                              <span>Total Amount</span>
+                            </div>
+                            <p className="text-white">₹{order.total_amount}</p>
+                          </div>
+                          <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10">
+                            <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                              <FiClock className="w-4 h-4" />
+                              <span>Ordered On</span>
+                            </div>
+                            <p className="text-white">
+                              {new Date(order.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10 flex items-center justify-between">
+                            <span className="text-gray-300">View Details</span>
+                            <FiChevronRight className="w-5 h-5 text-gray-400 group-hover:text-violet-400 transition-colors" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

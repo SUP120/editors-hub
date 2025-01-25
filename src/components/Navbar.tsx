@@ -1,49 +1,39 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
 
 export default function Navbar() {
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<any>(null)
   const [isArtist, setIsArtist] = useState(false)
   const [loading, setLoading] = useState(true)
   const [pendingOrders, setPendingOrders] = useState(0)
 
-  const fetchPendingOrdersCount = useCallback(async (userId: string) => {
-    try {
-      const { count } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true })
-        .eq('artist_id', userId)
-        .eq('status', 'pending')
+  useEffect(() => {
+    checkUser()
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN') {
+        const user = session?.user
+        if (user) {
+          setUser(user)
+          checkArtistStatus(user.id)
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setIsArtist(false)
+      }
+    })
 
-      setPendingOrders(count || 0)
-    } catch (error) {
-      console.error('Error fetching pending orders:', error)
+    return () => {
+      authListener?.subscription.unsubscribe()
     }
   }, [])
 
-  const checkArtistStatus = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_artist')
-        .eq('id', userId)
-        .single()
-
-      if (error) throw error
-      setIsArtist(data?.is_artist || false)
-    } catch (error) {
-      console.error('Error checking artist status:', error)
-    }
-  }, [])
-
-  const checkUser = useCallback(async () => {
+  const checkUser = async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       if (authError) throw authError
@@ -96,27 +86,36 @@ export default function Navbar() {
     } finally {
       setLoading(false)
     }
-  }, [fetchPendingOrdersCount])
+  }
 
-  useEffect(() => {
-    checkUser()
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN') {
-        const user = session?.user
-        if (user) {
-          setUser(user)
-          checkArtistStatus(user.id)
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null)
-        setIsArtist(false)
-      }
-    })
+  const fetchPendingOrdersCount = async (userId: string) => {
+    try {
+      const { count } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('artist_id', userId)
+        .eq('status', 'pending')
 
-    return () => {
-      authListener?.subscription.unsubscribe()
+      setPendingOrders(count || 0)
+    } catch (error) {
+      console.error('Error fetching pending orders:', error)
     }
-  }, [checkUser, checkArtistStatus])
+  }
+
+  const checkArtistStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_artist')
+        .eq('id', userId)
+        .single()
+
+      if (error) throw error
+      setIsArtist(data?.is_artist || false)
+    } catch (error) {
+      console.error('Error checking artist status:', error)
+    }
+  }
 
   const handleSignOut = async () => {
     try {
@@ -138,33 +137,31 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Link 
-              href="/browse-works"
-              className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
-            >
-              Browse Works
-            </Link>
-
-            {user && (
-              <Link
-                href="/orders"
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
-                My Orders
-              </Link>
-            )}
-
             {!loading && (
               <>
                 {user ? (
                   <>
+                    <Link 
+                      href="/browse-works"
+                      className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
+                    >
+                      Browse Works
+                    </Link>
+
+                    <Link
+                      href="/orders"
+                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      My Orders
+                    </Link>
+
                     {isArtist && (
                       <>
                         <Link href="/artist/profile" className="text-gray-300 hover:text-white">
                           Artist Profile
                         </Link>
-                        <Link href="/artist/earnings" className="text-gray-300 hover:text-white">
-                          Earnings
+                        <Link href="/artist/wallet" className="text-gray-300 hover:text-white">
+                          Wallet
                         </Link>
                         <Link 
                           href="/artist/notifications" 

@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = new Resend(process.env.RESEND_API_KEY || 're_Y5EFsz5v_C129wqeQhYeXUo22KeUQB4VX')
 
 export async function POST(request: Request) {
   try {
@@ -12,10 +12,16 @@ export async function POST(request: Request) {
       to,
       subject,
       html,
+      // Adding additional configuration for better deliverability
+      tags: [{ name: 'category', value: 'notification' }],
+      headers: {
+        'X-Entity-Ref-ID': new Date().getTime().toString(),
+      }
     })
 
     return NextResponse.json(data)
   } catch (error) {
-    return NextResponse.json({ error })
+    console.error('Email sending error:', error)
+    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
   }
 } 

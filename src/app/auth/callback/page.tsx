@@ -1,58 +1,98 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function AuthCallback() {
   const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get the user after auth callback
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) throw new Error('No user found')
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) throw sessionError
+        if (!session) throw new Error('No session found')
 
-        // Check if user already has a profile
+        // Check if user profile exists
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('*')
-          .eq('id', user.id)
+          .select('is_artist')
+          .eq('id', session.user.id)
           .single()
 
-        if (profileError && profileError.code !== 'PGRST116') {
+        // Get the intended role from localStorage (for new signups)
+        const intendedRole = localStorage.getItem('isArtistSignup')
+        
+        if (profileError && profileError.code === 'PGRST116') {
+          // This is a new user signing up
+          const isArtistSignup = intendedRole === 'true'
+          
+          // Create basic profile
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              email: session.user.email,
+              full_name: session.user.user_metadata.full_name || session.user.email?.split('@')[0],
+              is_artist: isArtistSignup,
+              is_admin: false
+            })
+
+          if (insertError) throw insertError
+
+          // Clear the signup type from storage
+          localStorage.removeItem('isArtistSignup')
+          
+          // New user redirects
+          if (isArtistSignup) {
+            router.push('/artist/complete-profile') // New artist goes to complete profile
+          } else {
+            router.push('/browse-works') // New client goes to browse
+          }
+          return
+        } else if (profileError) {
           throw profileError
         }
 
-        if (profile) {
-          // User has a profile, check if they're an artist
-          if (profile.is_artist) {
-            // Artist profile exists, redirect to dashboard
-            router.push('/artist/dashboard')
-          } else {
-            // Regular user profile exists, redirect to client dashboard
-            router.push('/dashboard')
-          }
+        // This is a returning user
+        localStorage.removeItem('isArtistSignup') // Clean up any leftover flags
+        
+        // Existing user redirects
+        if (profile.is_artist) {
+          router.push('/artist/profile') // Existing artist goes to profile
         } else {
-          // No profile exists, redirect to profile creation
-          router.push('/auth/complete-profile')
+          router.push('/browse-works') // Existing client goes to browse
         }
-      } catch (error) {
-        console.error('Error in auth callback:', error)
-        router.push('/auth/signin?error=callback_failed')
+      } catch (error: any) {
+        console.error('Auth callback error:', error)
+        setError(error.message || 'Authentication failed')
+        setTimeout(() => {
+          router.push('/auth/signin')
+        }, 3000)
       }
     }
 
     handleCallback()
   }, [router])
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
-      <div className="glass-card p-8 rounded-xl text-white text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500 mx-auto mb-4"></div>
-        <p>Completing sign in...</p>
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="bg-red-500/10 p-6 rounded-lg text-center">
+          <h2 className="text-red-500 text-xl font-semibold mb-2">Authentication Error</h2>
+          <p className="text-gray-300">{error}</p>
+          <p className="text-gray-400 mt-2">Redirecting to sign in page...</p>
+        </div>
       </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <LoadingSpinner fullScreen text="Completing authentication..." />
     </div>
   )
 } 

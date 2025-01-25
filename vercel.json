@@ -1,0 +1,21 @@
+{
+  "framework": "nextjs",
+  "public": true,
+  "github": {
+    "enabled": true,
+    "silent": true
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ],
+  "buildCommand": "npm run build",
+  "installCommand": "npm install"
+} 

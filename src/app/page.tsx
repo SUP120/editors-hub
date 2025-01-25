@@ -4,116 +4,210 @@ import React from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import { FiArrowRight, FiCheck, FiStar, FiTrendingUp, FiUsers, FiAward, FiClock, FiDollarSign, FiMail } from 'react-icons/fi'
 
 export default function Home() {
   return (
     <div className="relative">
       {/* Navigation with Logo */}
-      <nav className="absolute top-0 left-0 right-0 z-10 p-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Image
-                src="/logo.png"
-                alt="Editor&apos;s Hub Logo"
-                width={50}
-                height={50}
-                className="rounded-full"
-              />
-            </motion.div>
-            <motion.h1
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="ml-4 text-2xl font-bold text-white"
-            >
-              Editor&apos;s Hub
-            </motion.h1>
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#0f172a]/80 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Image
+                  src="/logo.png"
+                  alt="Editor's Hub Logo"
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+              </motion.div>
+              <motion.h1
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="ml-3 text-xl font-bold text-white"
+              >
+                Editor's Hub
+              </motion.h1>
+            </div>
+            <div className="hidden md:flex items-center space-x-6">
+              <Link href="/browse-works" className="text-gray-300 hover:text-white transition-colors">Browse Works</Link>
+              <Link href="/auth/signin" className="text-gray-300 hover:text-white transition-colors">Sign In</Link>
+              <Link href="/auth/signup">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium
+                           hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all"
+                >
+                  Join as Artist
+                </motion.button>
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
+      <div className="relative min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
-          <div className="text-center">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="text-4xl md:text-6xl font-bold text-white mb-6"
-            >
-              Welcome to Editor&apos;s Hub
-              <span className="block text-violet-400">Your Creative Partner</span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto"
-            >
-              Connect with talented artists for your creative projects. From video editing to graphic design, find the right artist for your needs.
-            </motion.p>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="space-y-8"
             >
-              <Link href="/browse-works">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="glass-button px-8 py-4 text-lg font-medium text-white rounded-lg w-full sm:w-auto"
-                >
-                  Browse Works
-                </motion.button>
-              </Link>
-              <Link href="/auth/artist-signup">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-8 py-4 text-lg font-medium bg-gray-800/50 text-white rounded-lg hover:bg-gray-800 w-full sm:w-auto"
-                >
-                  Join as Artist
-                </motion.button>
-              </Link>
+              <h1 className="text-5xl md:text-6xl font-bold">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">
+                  Transform
+                </span>
+                <br />
+                Your Creative Vision
+              </h1>
+              <p className="text-xl text-gray-300 leading-relaxed">
+                Connect with talented artists who bring your ideas to life. From video editing to graphic design, find the perfect creative partner for your projects.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/browse-works">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="group px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium
+                             hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                  >
+                    Explore Works
+                    <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                </Link>
+                <Link href="/auth/signup">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-6 py-3 rounded-xl text-gray-300 font-medium backdrop-blur-sm
+                             bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                  >
+                    Get Started
+                  </motion.button>
+                </Link>
+                <Link href="/contact">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="group relative px-6 py-3 rounded-xl text-gray-300 font-medium backdrop-blur-sm
+                             bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-2"
+                  >
+                    Contact Us
+                    <FiMail className="w-4 h-4" />
+                    <div className="absolute top-full mt-2 right-0 w-64 p-4 rounded-xl backdrop-blur-xl bg-white/10 border border-white/10 
+                                  opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <div className="space-y-3 text-sm">
+                        <a 
+                          href="mailto:dbforuse@gmail.com"
+                          className="block text-violet-400 hover:text-violet-300"
+                        >
+                          dbforuse@gmail.com
+                        </a>
+                        <a 
+                          href="https://discord.gg/"
+                          className="block text-violet-400 hover:text-violet-300"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Join our Discord
+                        </a>
+                      </div>
+                    </div>
+                  </motion.button>
+                </Link>
+              </div>
+              <div className="flex items-center gap-8 pt-4">
+                <div>
+                  <h4 className="text-2xl font-bold text-white">500+</h4>
+                  <p className="text-gray-400">Active Artists</p>
+                </div>
+                <div>
+                  <h4 className="text-2xl font-bold text-white">2k+</h4>
+                  <p className="text-gray-400">Projects Done</p>
+                </div>
+                <div>
+                  <h4 className="text-2xl font-bold text-white">4.9</h4>
+                  <p className="text-gray-400">Avg. Rating</p>
+                </div>
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl"></div>
+              <div className="relative">
+                <Image
+                  src="/hero-image.png"
+                  alt="Creative Work"
+                  width={600}
+                  height={400}
+                  className="rounded-3xl shadow-2xl"
+                />
+                <div className="absolute -bottom-6 -right-6 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl p-4 shadow-xl">
+                  <div className="flex items-center gap-2">
+                    <FiStar className="w-5 h-5 text-yellow-300" />
+                    <span className="text-white font-medium">Trusted by 10,000+ clients</span>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
       </div>
 
       {/* Features Section */}
-      <div className="bg-gray-900 py-24">
+      <div className="bg-[#0f172a] py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white mb-4">How It Works</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              Our platform makes it easy to connect with talented artists and get your projects done.
-            </p>
+          <div className="text-center mb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 mb-4">
+                Why Choose Editor's Hub?
+              </h2>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                We provide a seamless platform for connecting creative talent with clients worldwide.
+              </p>
+            </motion.div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                title: 'Browse Portfolio',
-                description: 'Explore diverse works from talented artists and find the perfect match for your project.',
-                icon: '🎨'
+                icon: <FiUsers className="w-6 h-6" />,
+                title: 'Verified Artists',
+                description: 'Every artist is carefully vetted to ensure high-quality work and professionalism.',
+                color: 'from-purple-400/10 to-indigo-400/10'
               },
               {
-                title: 'Place Order',
-                description: 'Easily place orders with clear requirements and communicate directly with artists.',
-                icon: '📝'
+                icon: <FiClock className="w-6 h-6" />,
+                title: 'Fast Delivery',
+                description: 'Get your projects completed quickly with our efficient delivery system.',
+                color: 'from-violet-400/10 to-fuchsia-400/10'
               },
               {
-                title: 'Get Results',
-                description: 'Receive high-quality work delivered on time, with revisions if needed.',
-                icon: '✨'
+                icon: <FiAward className="w-6 h-6" />,
+                title: 'Quality Guaranteed',
+                description: 'We ensure the highest quality standards with our revision and feedback system.',
+                color: 'from-indigo-400/10 to-cyan-400/10'
               }
             ].map((feature, index) => (
               <motion.div
@@ -121,12 +215,86 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="glass-card p-6 rounded-xl text-center"
+                transition={{ delay: index * 0.2 }}
+                className="relative group"
               >
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-gray-400">{feature.description}</p>
+                <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity`} />
+                <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl">
+                  <div className="text-white mb-4 p-3 rounded-xl bg-white/5 border border-white/10 w-fit">
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+                  <p className="text-gray-400">{feature.description}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* How It Works Section */}
+      <div className="bg-[#0f172a] py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 mb-4">
+                How It Works
+              </h2>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                Get your creative projects done in three simple steps
+              </p>
+            </motion.div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                number: '01',
+                title: 'Browse & Choose',
+                description: 'Explore our diverse collection of artists and their portfolios to find the perfect match.',
+                icon: <FiUsers className="w-6 h-6" />
+              },
+              {
+                number: '02',
+                title: 'Place Order',
+                description: 'Submit your project details and requirements with our easy-to-use order system.',
+                icon: <FiDollarSign className="w-6 h-6" />
+              },
+              {
+                number: '03',
+                title: 'Get Results',
+                description: 'Receive your completed work and request revisions if needed.',
+                icon: <FiCheck className="w-6 h-6" />
+              }
+            ].map((step, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.2 }}
+                className="relative"
+              >
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl blur opacity-20"></div>
+                <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">
+                      {step.number}
+                    </div>
+                    <div className="h-px flex-1 bg-gradient-to-r from-violet-400/20 to-indigo-400/20"></div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-3">{step.title}</h3>
+                  <p className="text-gray-400 mb-6">{step.description}</p>
+                  <div className="text-white p-3 rounded-xl bg-white/5 border border-white/10 w-fit">
+                    {step.icon}
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -134,36 +302,49 @@ export default function Home() {
       </div>
 
       {/* Categories Section */}
-      <div className="bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 py-24">
+      <div className="bg-[#0f172a] py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white mb-4">Popular Categories</h2>
-            <p className="text-gray-300 max-w-2xl mx-auto">
-              Find artists specializing in various creative fields
-            </p>
+          <div className="text-center mb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400 mb-4">
+                Popular Categories
+              </h2>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                Discover talented artists across various creative fields
+              </p>
+            </motion.div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              'Video Editing',
-              'Photo Retouching',
-              'Graphic Design',
-              'Logo Design',
-              'Animation',
-              'Illustration',
-              'UI/UX Design',
-              'Motion Graphics'
+              { name: 'Video Editing', icon: '🎬' },
+              { name: 'Photo Retouching', icon: '📸' },
+              { name: 'Graphic Design', icon: '🎨' },
+              { name: 'Logo Design', icon: '✒️' },
+              { name: 'Animation', icon: '🎭' },
+              { name: 'Illustration', icon: '🖌️' },
+              { name: 'UI/UX Design', icon: '💻' },
+              { name: 'Motion Graphics', icon: '✨' }
             ].map((category, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-                className="glass-card p-6 rounded-xl text-center cursor-pointer"
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ scale: 1.02 }}
+                className="relative group cursor-pointer"
               >
-                <h3 className="text-white font-medium">{category}</h3>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 shadow-xl">
+                  <div className="text-4xl mb-3">{category.icon}</div>
+                  <h3 className="text-white font-medium">{category.name}</h3>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -171,156 +352,120 @@ export default function Home() {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gray-900 py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="glass-card rounded-xl p-12 text-center">
-            <h2 className="text-3xl font-bold text-white mb-6">
-              Ready to Start Your Project?
-            </h2>
-            <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-              Join thousands of satisfied clients who have found their perfect creative partner.
-            </p>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-            >
-              <Link href="/auth/signup">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="glass-button px-8 py-4 text-lg font-medium text-white rounded-lg w-full sm:w-auto"
+      <div className="bg-[#0f172a] py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
+            <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-12 shadow-xl">
+              <div className="max-w-3xl mx-auto text-center">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                  className="space-y-8"
                 >
-                  Get Started
-                </motion.button>
-              </Link>
-              <Link href="/browse-works">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-8 py-4 text-lg font-medium bg-gray-800/50 text-white rounded-lg hover:bg-gray-800 w-full sm:w-auto"
-                >
-                  Browse Works
-                </motion.button>
-              </Link>
-            </motion.div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">
+                    Ready to Start Your Creative Journey?
+                  </h2>
+                  <p className="text-xl text-gray-300">
+                    Join thousands of satisfied clients who have found their perfect creative partner.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Link href="/auth/signup">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="group px-8 py-4 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white text-lg font-medium
+                                 hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                      >
+                        Get Started
+                        <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                      </motion.button>
+                    </Link>
+                    <Link href="/browse-works">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="px-8 py-4 rounded-xl text-gray-300 text-lg font-medium backdrop-blur-sm
+                                 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                      >
+                        Browse Works
+                      </motion.button>
+                    </Link>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Developer Section */}
-      <div className="bg-gray-900 py-24">
+      {/* Footer */}
+      <footer className="bg-[#0f172a] border-t border-white/10 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="glass-card rounded-xl p-12"
-          >
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-4">About the Developer</h2>
-              <div className="w-24 h-1 bg-violet-500 mx-auto"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div>
+              <div className="flex items-center mb-6">
+                <Image
+                  src="/logo.png"
+                  alt="Editor's Hub Logo"
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+                <h3 className="ml-3 text-xl font-bold text-white">Editor's Hub</h3>
+              </div>
+              <p className="text-gray-400">
+                Connecting creative talent with clients worldwide.
+              </p>
             </div>
-            
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="space-y-6"
-              >
-                <h3 className="text-2xl font-bold text-white">Supriyam Kumar</h3>
-                <p className="text-gray-300 leading-relaxed">
-                  Hello! I'm Supriyam Kumar, a passionate game developer, Android app creator, and web developer with two years of hands-on experience in crafting engaging digital experiences. Currently a student in Class 12, I bring youthful energy and innovation to every project I undertake.
-                </p>
-                <p className="text-gray-300 leading-relaxed">
-                  With a strong foundation in Java and C#, I've developed and published multiple games that showcase my creativity and technical expertise. My deep interest in machine learning and space technology fuels my drive to stay ahead in the ever-evolving tech landscape.
-                </p>
-                <p className="text-gray-300 leading-relaxed">
-                  I believe in growing as a person each day, embracing challenges, and turning them into opportunities for learning and growth. My sensitivity to the concerns of those around me, combined with unwavering confidence and persistence, sets me apart as a developer and an individual.
-                </p>
-                <p className="text-gray-300 leading-relaxed">
-                  I'm committed to pushing the boundaries of what's possible, both in technology and in life, as I work toward creating impactful solutions for the future.
-                </p>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className="space-y-6"
-              >
-                <div className="glass-card p-6 rounded-xl">
-                  <h4 className="text-xl font-semibold text-white mb-4">Skills & Expertise</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {['Game Development', 'Android Development', 'Web Development', 'Java', 'C#', 'Machine Learning', 'Space Technology'].map((skill, index) => (
-                      <span key={index} className="px-3 py-1 bg-violet-900/50 rounded-full text-violet-200 text-sm">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="glass-card p-6 rounded-xl">
-                  <h4 className="text-xl font-semibold text-white mb-4">Connect With Me</h4>
-                  <div className="flex gap-4 justify-center">
-                    <motion.a
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      href="https://github.com/SUP120"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-3 bg-violet-900/50 rounded-full text-violet-200 hover:bg-violet-800/50"
-                    >
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                      </svg>
-                    </motion.a>
-                    <motion.a
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      href="https://www.instagram.com/supriyam.kumar_?igsh=dHgxdHh3ZnB0eDQw"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-3 bg-violet-900/50 rounded-full text-violet-200 hover:bg-violet-800/50"
-                    >
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
-                      </svg>
-                    </motion.a>
-                    <motion.a
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      href="https://x.com/chuddybuddy77?t=3qsFqVFY7_96AFqpYkDvsQ&s=09"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-3 bg-violet-900/50 rounded-full text-violet-200 hover:bg-violet-800/50"
-                    >
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                      </svg>
-                    </motion.a>
-                    <motion.a
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      href="mailto:dbforuse1@gmail.com"
-                      className="p-3 bg-violet-900/50 rounded-full text-violet-200 hover:bg-violet-800/50"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                      </svg>
-                    </motion.a>
-                  </div>
-                </div>
-              </motion.div>
+            <div>
+              <h4 className="text-white font-medium mb-4">Quick Links</h4>
+              <ul className="space-y-2">
+                <li><Link href="/browse-works" className="text-gray-400 hover:text-white transition-colors">Browse Works</Link></li>
+                <li><Link href="/auth/signin" className="text-gray-400 hover:text-white transition-colors">Sign In</Link></li>
+                <li><Link href="/auth/signup" className="text-gray-400 hover:text-white transition-colors">Sign Up</Link></li>
+              </ul>
             </div>
-          </motion.div>
+            <div>
+              <h4 className="text-white font-medium mb-4">Categories</h4>
+              <ul className="space-y-2">
+                <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Video Editing</Link></li>
+                <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Photo Retouching</Link></li>
+                <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Graphic Design</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-medium mb-4">Contact</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a 
+                    href="mailto:dbforuse@gmail.com" 
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    dbforuse@gmail.com
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="https://discord.gg/" 
+                    className="text-gray-400 hover:text-white transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Join our Discord
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-white/10 mt-12 pt-8 text-center">
+            <p className="text-gray-400">© 2024 Editor's Hub. All rights reserved.</p>
+          </div>
         </div>
-      </div>
+      </footer>
     </div>
   )
 } 

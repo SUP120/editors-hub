@@ -1,6 +1,25 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://ixgkcseieqsayechntmx.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4Z2tjc2VpZXFzYXllY2hudG14Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzczNjA5ODgsImV4cCI6MjA1MjkzNjk4OH0.79DexLDyMb5SHEYZxtWU8IRh2Gk51tH1YUgxndwjczM'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey) 
+// Determine the site URL based on environment
+const siteUrl = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:3000'
+  : process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}`
+    : ''
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'x-application-name': 'artist-hiring'
+    }
+  }
+}) 
