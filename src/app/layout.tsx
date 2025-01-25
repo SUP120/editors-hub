@@ -1,13 +1,13 @@
 import React from 'react'
 import './globals.css'
-import { Inter } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from 'react-hot-toast'
 import UserProvider from '@/contexts/UserProvider'
 
-const inter = Inter({ subsets: ['latin'] })
+const geistSans = GeistSans
 
 export const metadata = {
   title: 'Artist Hiring Platform',
@@ -20,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className={geistSans.className}>
+      <body>
         <AuthProvider>
           <UserProvider>
             <Toaster position="top-right" />
