@@ -69,7 +69,7 @@ export default function SignUp() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'http://localhost:3000/auth/callback'
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artist-hiring-public-dowe8kogu-sup120s-projects.vercel.app'}/auth/callback`
         }
       })
 
