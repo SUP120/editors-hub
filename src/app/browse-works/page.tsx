@@ -152,6 +152,7 @@ export default function BrowseWorks() {
           )
         `, { count: 'exact' })
         .eq('status', 'active')
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false })
         .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1)
 

@@ -1,98 +1,174 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import { toast } from 'react-hot-toast'
+import { Suspense } from 'react'
 
-export default function AuthCallback() {
+function CallbackContent() {
   const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) throw sessionError
-        if (!session) throw new Error('No session found')
+        console.log('Starting auth callback...')
+        
+        // Get the code from URL
+        const code = searchParams.get('code')
+        if (!code) {
+          console.error('No code in URL')
+          throw new Error('No code provided')
+        }
+        console.log('Got code from URL')
 
-        // Check if user profile exists
+        // Exchange code for session
+        console.log('Exchanging code for session...')
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+        if (exchangeError) {
+          console.error('Exchange error:', exchangeError)
+          throw exchangeError
+        }
+        console.log('Code exchanged successfully')
+
+        // Get session
+        console.log('Getting session...')
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) {
+          console.error('Session error:', sessionError)
+          throw sessionError
+        }
+        if (!session) {
+          console.error('No session found after exchange')
+          toast.error('No session found')
+          router.push('/auth/signin')
+          return
+        }
+        console.log('Got session for user:', session.user.email)
+
+        // Check if user exists in profiles
+        console.log('Checking for existing profile...')
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('is_artist')
+          .select('*')
           .eq('id', session.user.id)
           .single()
 
-        // Get the intended role from localStorage (for new signups)
-        const intendedRole = localStorage.getItem('isArtistSignup')
-        
-        if (profileError && profileError.code === 'PGRST116') {
-          // This is a new user signing up
-          const isArtistSignup = intendedRole === 'true'
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Profile error:', profileError)
+          throw profileError
+        }
+
+        // If no profile exists, this is a signup
+        if (!profile) {
+          console.log('No profile found - handling signup...')
           
-          // Create basic profile
-          const { error: insertError } = await supabase
+          // Get user type from localStorage
+          const userType = localStorage.getItem('isArtistSignup')
+          console.log('User type from localStorage:', userType)
+          
+          if (!userType) {
+            console.error('No user type found in localStorage')
+            toast.error('User type not found')
+            router.push('/auth/signup')
+            return
+          }
+
+          // Create profile
+          console.log('Creating profile...')
+          const { error: createError } = await supabase
             .from('profiles')
             .insert({
               id: session.user.id,
               email: session.user.email,
-              full_name: session.user.user_metadata.full_name || session.user.email?.split('@')[0],
-              is_artist: isArtistSignup,
-              is_admin: false
+              full_name: session.user.user_metadata?.full_name || '',
+              is_artist: userType === 'true',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             })
 
-          if (insertError) throw insertError
-
-          // Clear the signup type from storage
-          localStorage.removeItem('isArtistSignup')
-          
-          // New user redirects
-          if (isArtistSignup) {
-            router.push('/artist/complete-profile') // New artist goes to complete profile
-          } else {
-            router.push('/browse-works') // New client goes to browse
+          if (createError) {
+            console.error('Profile creation error:', createError)
+            throw createError
           }
-          return
-        } else if (profileError) {
-          throw profileError
-        }
+          console.log('Profile created successfully')
 
-        // This is a returning user
-        localStorage.removeItem('isArtistSignup') // Clean up any leftover flags
-        
-        // Existing user redirects
-        if (profile.is_artist) {
-          router.push('/artist/profile') // Existing artist goes to profile
+          // If artist, create artist profile
+          if (userType === 'true') {
+            console.log('Creating artist profile...')
+            const { error: artistProfileError } = await supabase
+              .from('artist_profiles')
+              .insert({
+                id: session.user.id,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+
+            if (artistProfileError) {
+              console.error('Artist profile creation error:', artistProfileError)
+              throw artistProfileError
+            }
+            console.log('Artist profile created successfully')
+          }
+
+          // Clear localStorage
+          localStorage.removeItem('isArtistSignup')
+          console.log('Cleared localStorage')
+
+          // Redirect based on user type
+          if (userType === 'true') {
+            console.log('Redirecting to profile edit...')
+            router.push('/profile/edit')
+            return
+          } else {
+            console.log('Redirecting to browse...')
+            router.push('/browse')
+            return
+          }
         } else {
-          router.push('/browse-works') // Existing client goes to browse
+          // This is a signin
+          console.log('Existing profile found - handling signin...')
+          if (profile.is_artist) {
+            console.log('Redirecting artist to dashboard...')
+            router.push('/dashboard')
+          } else {
+            console.log('Redirecting client to browse...')
+            router.push('/browse')
+          }
         }
       } catch (error: any) {
-        console.error('Auth callback error:', error)
-        setError(error.message || 'Authentication failed')
-        setTimeout(() => {
-          router.push('/auth/signin')
-        }, 3000)
+        console.error('Callback error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          stack: error.stack
+        })
+        toast.error(error.message || 'Authentication failed')
+        // Instead of redirecting to signin, let's redirect back to signup for new users
+        const isNewUser = !localStorage.getItem('isArtistSignup')
+        router.push(isNewUser ? '/auth/signup' : '/auth/signin')
       }
     }
 
     handleCallback()
-  }, [router])
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="bg-red-500/10 p-6 rounded-lg text-center">
-          <h2 className="text-red-500 text-xl font-semibold mb-2">Authentication Error</h2>
-          <p className="text-gray-300">{error}</p>
-          <p className="text-gray-400 mt-2">Redirecting to sign in page...</p>
-        </div>
-      </div>
-    )
-  }
+  }, [router, searchParams])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <LoadingSpinner fullScreen text="Completing authentication..." />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex items-center justify-center">
+      <div className="text-white text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white mx-auto mb-4"></div>
+        <p className="text-lg">Authenticating...</p>
+      </div>
     </div>
+  )
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense>
+      <CallbackContent />
+    </Suspense>
   )
 } 

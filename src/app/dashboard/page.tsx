@@ -33,6 +33,8 @@ export default function ClientDashboard() {
     const { data, error } = await supabase
       .from('works')
       .select('*')
+      .eq('is_deleted', false)
+      .eq('status', 'active')
       .order('created_at', { ascending: false })
 
     if (error) {

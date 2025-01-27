@@ -59,25 +59,29 @@ export default function WorkDetails({ params }: { params: { id: string } }) {
   }, [params.id])
 
   const fetchWorkDetails = async () => {
+    setLoading(true)
     try {
-      const { data, error } = await supabase
+      const { data: work, error: workError } = await supabase
         .from('works')
         .select(`
           *,
-          profiles!artist_id (
+          profiles!inner (
             id,
             full_name,
-            email,
+            avatar_url,
             is_artist
           )
         `)
         .eq('id', params.id)
+        .eq('is_deleted', false)
         .single()
 
-      if (error) throw error
-      setWork(data)
-      if (data?.images?.[0]) {
-        setSelectedImage(data.images[0])
+      if (workError) throw workError
+      if (!work) throw new Error('Work not found or has been deleted')
+
+      setWork(work)
+      if (work?.images?.[0]) {
+        setSelectedImage(work.images[0])
       }
     } catch (error: any) {
       console.error('Error:', error)

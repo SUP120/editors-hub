@@ -10,7 +10,7 @@ import BeforeAfterComparison from '@/components/portfolio/BeforeAfterComparison'
 import VideoPlayer from '@/components/portfolio/VideoPlayer'
 import type { Work, Profile, ArtistProfile } from '@/types'
 import { toast } from 'react-hot-toast'
-import { FiEdit3, FiPlus, FiRefreshCw, FiStar, FiAward, FiClock, FiMapPin, FiPhone, FiMail, FiUser } from 'react-icons/fi'
+import { FiEdit3, FiPlus, FiRefreshCw, FiStar, FiAward, FiClock, FiMapPin, FiPhone, FiMail, FiUser, FiEye, FiTrash2 } from 'react-icons/fi'
 
 export default function ArtistProfile() {
   const router = useRouter()
@@ -20,6 +20,7 @@ export default function ArtistProfile() {
   const [works, setWorks] = useState<Work[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     checkUser()
@@ -105,62 +106,28 @@ export default function ArtistProfile() {
   }
 
   const handleDeleteWork = async (workId: string) => {
-    if (!confirm('Are you sure you want to delete this work? This action cannot be undone. The work will be removed from everywhere including Browse Works and any pending orders will be cancelled.')) return
+    if (!confirm('Are you sure you want to delete this work? This action cannot be undone.')) {
+      return
+    }
 
+    setIsDeleting(workId)
     try {
-      // First delete any associated orders
-      const { error: ordersError } = await supabase
-        .from('orders')
-        .delete()
-        .eq('work_id', workId)
-
-      if (ordersError) {
-        console.error('Error deleting associated orders:', ordersError)
-        throw ordersError
-      }
-
-      // Delete the work's images from storage
-      const workToDelete = works.find(w => w.id === workId)
-      if (workToDelete?.images?.length) {
-        for (const image of workToDelete.images) {
-          const { error: storageError } = await supabase.storage
-            .from('works')
-            .remove([image])
-          
-          if (storageError) {
-            console.error('Error deleting work image:', storageError)
-            throw storageError
-          }
-        }
-      }
-
-      // Delete any reviews associated with the work
-      const { error: reviewsError } = await supabase
-        .from('reviews')
-        .delete()
-        .eq('work_id', workId)
-
-      if (reviewsError) {
-        console.error('Error deleting associated reviews:', reviewsError)
-        throw reviewsError
-      }
-
-      // Update the work status to deleted instead of removing it
       const { error } = await supabase
         .from('works')
-        .update({ status: 'deleted' })
+        .update({ is_deleted: true, status: 'deleted' })
         .eq('id', workId)
+        .eq('artist_id', user.id)
 
       if (error) throw error
 
-      // Update local state
-      setWorks(works.filter(work => work.id !== workId))
-
-      // Show success message using toast
-      toast.success('Work successfully deleted')
+      // Remove the work from the local state
+      setWorks(prevWorks => prevWorks.filter(w => w.id !== workId))
+      toast.success('Work deleted successfully')
     } catch (error: any) {
       console.error('Error deleting work:', error)
       toast.error(error.message || 'Failed to delete work')
+    } finally {
+      setIsDeleting(null)
     }
   }
 
@@ -444,25 +411,24 @@ export default function ArtistProfile() {
                                 <motion.button
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => handleEditWork(work.id)}
-                                  className="p-2 bg-violet-500/80 hover:bg-violet-400/80 rounded-xl text-white 
-                                           backdrop-blur-sm flex items-center gap-1 transition-all"
+                                  onClick={() => router.push(`/works/${work.id}`)}
+                                  className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all"
                                 >
-                                  <FiEdit3 className="w-4 h-4" />
-                                  Edit
+                                  <FiEye className="w-5 h-5" />
                                 </motion.button>
                                 <motion.button
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
                                   onClick={() => handleDeleteWork(work.id)}
-                                  className="p-2 bg-red-500/80 hover:bg-red-400/80 rounded-xl text-white 
-                                           backdrop-blur-sm flex items-center gap-1 transition-all"
+                                  disabled={isDeleting === work.id}
+                                  className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-xl text-red-400 
+                                           hover:text-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                  Delete
+                                  {isDeleting === work.id ? (
+                                    <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <FiTrash2 className="w-5 h-5" />
+                                  )}
                                 </motion.button>
                               </div>
                             </div>
