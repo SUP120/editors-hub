@@ -75,53 +75,52 @@ function CallbackContent() {
             return
           }
 
-          // Create profile
-          console.log('Creating profile...')
-          const { error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: session.user.id,
-              email: session.user.email,
-              full_name: session.user.user_metadata?.full_name || '',
-              is_artist: userType === 'true',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-
-          if (createError) {
-            console.error('Profile creation error:', createError)
-            throw createError
-          }
-          console.log('Profile created successfully')
-
-          // If artist, create artist profile
-          if (userType === 'true') {
-            console.log('Creating artist profile...')
-            const { error: artistProfileError } = await supabase
-              .from('artist_profiles')
+          try {
+            // Create profile
+            console.log('Creating profile...')
+            const { error: createError } = await supabase
+              .from('profiles')
               .insert({
                 id: session.user.id,
+                email: session.user.email,
+                full_name: session.user.user_metadata?.full_name || '',
+                is_artist: userType === 'true',
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               })
 
-            if (artistProfileError) {
-              console.error('Artist profile creation error:', artistProfileError)
-              throw artistProfileError
+            if (createError) throw createError
+            console.log('Profile created successfully')
+
+            // If artist, create artist profile
+            if (userType === 'true') {
+              console.log('Creating artist profile...')
+              const { error: artistProfileError } = await supabase
+                .from('artist_profiles')
+                .insert({
+                  id: session.user.id,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                })
+
+              if (artistProfileError) throw artistProfileError
+              console.log('Artist profile created successfully')
+              
+              // Clear localStorage and redirect to profile edit
+              localStorage.removeItem('isArtistSignup')
+              console.log('Cleared localStorage, redirecting to artist profile...')
+              router.push('/artist/profile')
+              return
+            } else {
+              // Clear localStorage and redirect to browse for clients
+              localStorage.removeItem('isArtistSignup')
+              console.log('Cleared localStorage, redirecting to browse...')
+              router.push('/browse-works')
+              return
             }
-            console.log('Artist profile created successfully')
-            
-            // Clear localStorage and redirect to profile edit
-            localStorage.removeItem('isArtistSignup')
-            console.log('Cleared localStorage, redirecting to profile edit...')
-            router.push('/artist/profile')
-            return
-          } else {
-            // Clear localStorage and redirect to browse for clients
-            localStorage.removeItem('isArtistSignup')
-            console.log('Cleared localStorage, redirecting to browse...')
-            router.push('/browse-works')
-            return
+          } catch (error: any) {
+            console.error('Profile creation error:', error)
+            throw error
           }
         } else {
           // This is a signin - redirect based on existing profile type
@@ -143,17 +142,8 @@ function CallbackContent() {
           stack: error.stack
         })
         
-        // Get user type to determine where to redirect on error
-        const userType = localStorage.getItem('isArtistSignup')
         toast.error('Authentication failed. Please try again.')
-        
-        if (userType) {
-          // This was a signup attempt
-          router.push('/auth/signup')
-        } else {
-          // This was a signin attempt
-          router.push('/auth/signin')
-        }
+        router.push('/auth/signup')
       }
     }
 
