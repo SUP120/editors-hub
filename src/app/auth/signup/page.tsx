@@ -57,17 +57,14 @@ export default function SignUp() {
       console.log('Auth signup successful:', authData)
 
       if (authData.user) {
-        // Wait a bit for the user to be fully created
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // Sign in immediately after signup
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        })
 
-        // Verify user exists in auth.users
-        const { data: userData, error: userError } = await supabase.auth.getUser()
-        console.log('Verified user data:', userData)
-        
-        if (userError) {
-          console.error('Error verifying user:', userError)
-          throw userError
-        }
+        if (signInError) throw signInError
+        console.log('Signed in after signup:', signInData)
 
         // Create profile
         console.log('Creating profile for user:', authData.user.id)
