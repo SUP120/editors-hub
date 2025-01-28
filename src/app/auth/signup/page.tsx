@@ -39,6 +39,8 @@ export default function SignUp() {
         return
       }
 
+      console.log('Starting signup process...')
+      
       // Sign up with email and password
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
@@ -51,13 +53,25 @@ export default function SignUp() {
       })
 
       if (signUpError) throw signUpError
+      
+      console.log('Auth signup successful:', authData)
 
       if (authData.user) {
         // Wait a bit for the user to be fully created
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, 2000))
+
+        // Verify user exists in auth.users
+        const { data: userData, error: userError } = await supabase.auth.getUser()
+        console.log('Verified user data:', userData)
+        
+        if (userError) {
+          console.error('Error verifying user:', userError)
+          throw userError
+        }
 
         // Create profile
-        const { error: profileError } = await supabase
+        console.log('Creating profile for user:', authData.user.id)
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: authData.user.id,
@@ -66,27 +80,33 @@ export default function SignUp() {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
+          .select()
 
         if (profileError) {
           console.error('Profile creation error:', profileError)
-          throw new Error('Failed to create profile. Please try signing in if you already have an account.')
+          throw new Error(`Failed to create profile: ${profileError.message}`)
         }
+
+        console.log('Profile created successfully:', profileData)
 
         // If artist, create artist profile
         if (formData.userType === 'artist') {
-          const { error: artistProfileError } = await supabase
+          console.log('Creating artist profile...')
+          const { data: artistData, error: artistProfileError } = await supabase
             .from('artist_profiles')
             .insert({
               id: authData.user.id,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
+            .select()
 
           if (artistProfileError) {
             console.error('Artist profile creation error:', artistProfileError)
-            throw new Error('Failed to create artist profile. Please contact support.')
+            throw new Error(`Failed to create artist profile: ${artistProfileError.message}`)
           }
 
+          console.log('Artist profile created successfully:', artistData)
           toast.success('Account created! Please complete your artist profile.')
           router.push('/artist/complete-profile')
         } else {
@@ -96,9 +116,9 @@ export default function SignUp() {
         }
       }
     } catch (error: any) {
-      console.error('Error:', error)
-      setError(error.message)
-      toast.error(error.message)
+      console.error('Signup error:', error)
+      setError(error.message || 'An unexpected error occurred')
+      toast.error(error.message || 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
