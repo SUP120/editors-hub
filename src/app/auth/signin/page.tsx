@@ -9,30 +9,44 @@ import { toast } from 'react-hot-toast'
 
 export default function SignIn() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-    setMessage('')
 
     try {
-      // Send magic link
-      const { error: signInError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
-        }
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
       })
 
       if (signInError) throw signInError
 
-      toast.success('Check your email for the magic link!')
-      setMessage('Check your email for the magic link!')
+      if (data.user) {
+        // Check user type and redirect accordingly
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_artist')
+          .eq('id', data.user.id)
+          .single()
+
+        if (profileError) throw profileError
+
+        toast.success('Welcome back!')
+        
+        if (profile.is_artist) {
+          router.push('/artist/profile')
+        } else {
+          router.push('/browse-works')
+        }
+      }
     } catch (error: any) {
       console.error('Error:', error)
       setError(error.message)
@@ -64,22 +78,31 @@ export default function SignIn() {
                 id="email"
                 type="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
                 placeholder="Enter your email"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                placeholder="Enter your password"
               />
             </div>
 
             {error && (
               <div className="text-red-400 text-sm text-center">
                 {error}
-              </div>
-            )}
-
-            {message && (
-              <div className="text-green-400 text-sm text-center">
-                {message}
               </div>
             )}
 
@@ -90,7 +113,7 @@ export default function SignIn() {
               disabled={isLoading}
               className="w-full glass-button px-6 py-3 rounded-lg text-white font-medium disabled:opacity-50"
             >
-              {isLoading ? 'Sending...' : 'Sign In with Email'}
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </motion.button>
           </form>
 

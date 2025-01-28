@@ -9,24 +9,25 @@ import { toast } from 'react-hot-toast'
 
 export default function SignUp() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [userType, setUserType] = useState<'client' | 'artist'>('client')
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    userType: 'client' as 'client' | 'artist'
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-    setMessage('')
 
     try {
       // First check if user already exists
       const { data: existingUser, error: checkError } = await supabase
         .from('profiles')
         .select('id, is_artist')
-        .eq('email', email)
+        .eq('email', formData.email)
         .single()
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -38,20 +39,48 @@ export default function SignUp() {
         return
       }
 
-      const { error: signUpError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}?type=${userType}`,
-          data: {
-            userType: userType
-          }
-        }
+      // Sign up with email and password
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password
       })
 
       if (signUpError) throw signUpError
 
-      toast.success('Check your email for the magic link!')
-      setMessage('Check your email for the magic link!')
+      if (data.user) {
+        // Create profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: formData.email,
+            is_artist: formData.userType === 'artist',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+
+        if (profileError) throw profileError
+
+        // If artist, create artist profile and redirect to complete profile
+        if (formData.userType === 'artist') {
+          const { error: artistProfileError } = await supabase
+            .from('artist_profiles')
+            .insert({
+              id: data.user.id,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+
+          if (artistProfileError) throw artistProfileError
+
+          toast.success('Account created! Please complete your artist profile.')
+          router.push('/artist/complete-profile')
+        } else {
+          // For clients, redirect to browse works
+          toast.success('Account created! Welcome to Editor\'s Hub.')
+          router.push('/browse-works')
+        }
+      }
     } catch (error: any) {
       console.error('Error:', error)
       setError(error.message)
@@ -78,9 +107,9 @@ export default function SignUp() {
             <div className="flex justify-center space-x-4">
               <button
                 type="button"
-                onClick={() => setUserType('client')}
+                onClick={() => setFormData({ ...formData, userType: 'client' })}
                 className={`px-6 py-3 rounded-lg ${
-                  userType === 'client'
+                  formData.userType === 'client'
                     ? 'bg-violet-600 text-white'
                     : 'bg-gray-700 text-gray-300'
                 }`}
@@ -89,9 +118,9 @@ export default function SignUp() {
               </button>
               <button
                 type="button"
-                onClick={() => setUserType('artist')}
+                onClick={() => setFormData({ ...formData, userType: 'artist' })}
                 className={`px-6 py-3 rounded-lg ${
-                  userType === 'artist'
+                  formData.userType === 'artist'
                     ? 'bg-violet-600 text-white'
                     : 'bg-gray-700 text-gray-300'
                 }`}
@@ -100,7 +129,7 @@ export default function SignUp() {
               </button>
             </div>
             <p className="text-gray-400 text-center mt-4">
-              {userType === 'artist'
+              {formData.userType === 'artist'
                 ? 'Create an account to showcase your work and get hired'
                 : 'Create an account to hire talented artists'}
             </p>
@@ -115,22 +144,32 @@ export default function SignUp() {
                 id="email"
                 type="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
                 placeholder="Enter your email"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                placeholder="Create a password"
               />
             </div>
 
             {error && (
               <div className="text-red-400 text-sm text-center">
                 {error}
-              </div>
-            )}
-
-            {message && (
-              <div className="text-green-400 text-sm text-center">
-                {message}
               </div>
             )}
 
@@ -141,7 +180,7 @@ export default function SignUp() {
               disabled={isLoading}
               className="w-full glass-button px-6 py-3 rounded-lg text-white font-medium disabled:opacity-50"
             >
-              {isLoading ? 'Sending...' : 'Sign Up with Email'}
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </motion.button>
           </form>
 
