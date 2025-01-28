@@ -40,38 +40,52 @@ export default function SignUp() {
       }
 
       // Sign up with email and password
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        options: {
+          data: {
+            is_artist: formData.userType === 'artist'
+          }
+        }
       })
 
       if (signUpError) throw signUpError
 
-      if (data.user) {
+      if (authData.user) {
+        // Wait a bit for the user to be fully created
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
         // Create profile
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
-            id: data.user.id,
+            id: authData.user.id,
             email: formData.email,
             is_artist: formData.userType === 'artist',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
 
-        if (profileError) throw profileError
+        if (profileError) {
+          console.error('Profile creation error:', profileError)
+          throw new Error('Failed to create profile. Please try signing in if you already have an account.')
+        }
 
-        // If artist, create artist profile and redirect to complete profile
+        // If artist, create artist profile
         if (formData.userType === 'artist') {
           const { error: artistProfileError } = await supabase
             .from('artist_profiles')
             .insert({
-              id: data.user.id,
+              id: authData.user.id,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
 
-          if (artistProfileError) throw artistProfileError
+          if (artistProfileError) {
+            console.error('Artist profile creation error:', artistProfileError)
+            throw new Error('Failed to create artist profile. Please contact support.')
+          }
 
           toast.success('Account created! Please complete your artist profile.')
           router.push('/artist/complete-profile')
