@@ -47,6 +47,10 @@ function CallbackContent() {
         }
         console.log('Got session for user:', session.user.email)
 
+        // Get user type from localStorage
+        const userType = localStorage.getItem('isArtistSignup')
+        console.log('User type from localStorage:', userType)
+
         // Check if user exists in profiles
         console.log('Checking for existing profile...')
         const { data: profile, error: profileError } = await supabase
@@ -63,10 +67,6 @@ function CallbackContent() {
         // If no profile exists, this is a signup
         if (!profile) {
           console.log('No profile found - handling signup...')
-          
-          // Get user type from localStorage
-          const userType = localStorage.getItem('isArtistSignup')
-          console.log('User type from localStorage:', userType)
           
           if (!userType) {
             console.error('No user type found in localStorage')
@@ -110,31 +110,28 @@ function CallbackContent() {
               throw artistProfileError
             }
             console.log('Artist profile created successfully')
-          }
-
-          // Clear localStorage
-          localStorage.removeItem('isArtistSignup')
-          console.log('Cleared localStorage')
-
-          // Redirect based on user type
-          if (userType === 'true') {
-            console.log('Redirecting to profile edit...')
-            router.push('/profile/edit')
+            
+            // Clear localStorage and redirect to profile edit
+            localStorage.removeItem('isArtistSignup')
+            console.log('Cleared localStorage, redirecting to profile edit...')
+            router.push('/artist/profile')
             return
           } else {
-            console.log('Redirecting to browse...')
-            router.push('/browse')
+            // Clear localStorage and redirect to browse for clients
+            localStorage.removeItem('isArtistSignup')
+            console.log('Cleared localStorage, redirecting to browse...')
+            router.push('/browse-works')
             return
           }
         } else {
-          // This is a signin
+          // This is a signin - redirect based on existing profile type
           console.log('Existing profile found - handling signin...')
           if (profile.is_artist) {
             console.log('Redirecting artist to dashboard...')
             router.push('/dashboard')
           } else {
             console.log('Redirecting client to browse...')
-            router.push('/browse')
+            router.push('/browse-works')
           }
         }
       } catch (error: any) {
@@ -145,10 +142,18 @@ function CallbackContent() {
           hint: error.hint,
           stack: error.stack
         })
-        toast.error(error.message || 'Authentication failed')
-        // Instead of redirecting to signin, let's redirect back to signup for new users
-        const isNewUser = !localStorage.getItem('isArtistSignup')
-        router.push(isNewUser ? '/auth/signup' : '/auth/signin')
+        
+        // Get user type to determine where to redirect on error
+        const userType = localStorage.getItem('isArtistSignup')
+        toast.error('Authentication failed. Please try again.')
+        
+        if (userType) {
+          // This was a signup attempt
+          router.push('/auth/signup')
+        } else {
+          // This was a signin attempt
+          router.push('/auth/signin')
+        }
       }
     }
 

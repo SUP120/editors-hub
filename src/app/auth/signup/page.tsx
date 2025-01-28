@@ -38,8 +38,11 @@ export default function SignUp() {
         return
       }
 
-      // Store user type in localStorage for callback page
+      // Clear any existing user type first
+      localStorage.removeItem('isArtistSignup')
+      // Store new user type in localStorage
       localStorage.setItem('isArtistSignup', userType === 'artist' ? 'true' : 'false')
+      console.log('Stored user type in localStorage:', userType)
 
       const { error: signUpError } = await supabase.auth.signInWithOtp({
         email,
@@ -56,6 +59,8 @@ export default function SignUp() {
       console.error('Error:', error)
       setError(error.message)
       toast.error(error.message)
+      // Clear localStorage on error
+      localStorage.removeItem('isArtistSignup')
     } finally {
       setIsLoading(false)
     }
