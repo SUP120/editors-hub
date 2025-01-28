@@ -15,13 +15,16 @@ function CallbackContent() {
       try {
         console.log('Starting auth callback...')
         
-        // Get the code from URL
+        // Get the code and type from URL
         const code = searchParams.get('code')
+        const userType = searchParams.get('type')
+        
+        console.log('URL parameters:', { code, userType })
+
         if (!code) {
           console.error('No code in URL')
           throw new Error('No code provided')
         }
-        console.log('Got code from URL')
 
         // Exchange code for session
         console.log('Exchanging code for session...')
@@ -47,10 +50,6 @@ function CallbackContent() {
         }
         console.log('Got session for user:', session.user.email)
 
-        // Get user type from localStorage
-        const userType = localStorage.getItem('isArtistSignup')
-        console.log('User type from localStorage:', userType)
-
         // Check if user exists in profiles
         console.log('Checking for existing profile...')
         const { data: profile, error: profileError } = await supabase
@@ -69,13 +68,15 @@ function CallbackContent() {
           console.log('No profile found - handling signup...')
           
           if (!userType) {
-            console.error('No user type found in localStorage')
+            console.error('No user type found in URL')
             toast.error('User type not found')
             router.push('/auth/signup')
             return
           }
 
           try {
+            const isArtist = userType === 'artist'
+            
             // Create profile
             console.log('Creating profile...')
             const { error: createError } = await supabase
@@ -84,7 +85,7 @@ function CallbackContent() {
                 id: session.user.id,
                 email: session.user.email,
                 full_name: session.user.user_metadata?.full_name || '',
-                is_artist: userType === 'true',
+                is_artist: isArtist,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               })
@@ -93,7 +94,7 @@ function CallbackContent() {
             console.log('Profile created successfully')
 
             // If artist, create artist profile
-            if (userType === 'true') {
+            if (isArtist) {
               console.log('Creating artist profile...')
               const { error: artistProfileError } = await supabase
                 .from('artist_profiles')
@@ -106,15 +107,11 @@ function CallbackContent() {
               if (artistProfileError) throw artistProfileError
               console.log('Artist profile created successfully')
               
-              // Clear localStorage and redirect to profile edit
-              localStorage.removeItem('isArtistSignup')
-              console.log('Cleared localStorage, redirecting to artist profile...')
+              console.log('Redirecting to artist profile...')
               router.push('/artist/profile')
               return
             } else {
-              // Clear localStorage and redirect to browse for clients
-              localStorage.removeItem('isArtistSignup')
-              console.log('Cleared localStorage, redirecting to browse...')
+              console.log('Redirecting to browse works...')
               router.push('/browse-works')
               return
             }

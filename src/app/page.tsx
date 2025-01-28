@@ -43,7 +43,7 @@ export default function Home() {
               </motion.h1>
             </div>
             <div className="hidden md:flex items-center space-x-6">
-              <Link href="/browse" className="text-gray-300 hover:text-white transition-colors">Browse Works</Link>
+              <Link href="/browse-works" className="text-gray-300 hover:text-white transition-colors">Browse Works</Link>
               <Link href="/auth/signin">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
