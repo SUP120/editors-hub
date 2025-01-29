@@ -32,10 +32,15 @@ export default function SignUp() {
       })
 
       if (error) throw error
+
+      // Add loading state while redirecting
+      setIsLoading(true)
+      toast.loading('Redirecting to Google...')
     } catch (error: any) {
       console.error('Error:', error)
       setError(error.message)
       toast.error(error.message)
+      setIsLoading(false)
     }
   }
 
