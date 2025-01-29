@@ -51,7 +51,7 @@ export default function AuthRedirect() {
               if (createError) throw createError
               console.log('Profile created successfully')
 
-              // If artist, create artist profile
+              // If artist, create artist profile placeholder
               if (isArtist) {
                 const { error: artistProfileError } = await supabase
                   .from('artist_profiles')
@@ -62,18 +62,37 @@ export default function AuthRedirect() {
                   })
 
                 if (artistProfileError) throw artistProfileError
-                console.log('Artist profile created successfully')
+                console.log('Artist profile placeholder created successfully')
+                
+                // Redirect artist to complete profile
+                router.push('/artist/complete-profile')
+                return
               }
-
-              // Redirect to welcome page
-              router.push('/welcome')
+              
+              // Redirect client to browse works
+              router.push('/browse-works')
             } catch (error: any) {
               console.error('Profile creation error:', error)
               throw error
             }
           } else {
-            // Existing user - redirect to welcome page
-            router.push('/welcome')
+            // Existing user - redirect based on type and profile completion
+            if (profile.is_artist) {
+              // Check if artist has completed their profile
+              const { data: artistProfile } = await supabase
+                .from('artist_profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single()
+
+              if (!artistProfile) {
+                router.push('/artist/complete-profile')
+              } else {
+                router.push('/artist/profile')
+              }
+            } else {
+              router.push('/browse-works')
+            }
           }
         }
       } catch (error: any) {
@@ -87,7 +106,9 @@ export default function AuthRedirect() {
     const code = searchParams.get('code')
     if (code) {
       console.log('Found auth code in URL, handling authentication...')
-      handleAuthChanges()
+      supabase.auth.exchangeCodeForSession(code).then(() => {
+        handleAuthChanges()
+      })
     }
 
     // Listen for auth state changes
