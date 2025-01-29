@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
+import { FcGoogle } from 'react-icons/fc'
 
 export default function SignIn() {
   const router = useRouter()
@@ -15,6 +16,27 @@ export default function SignIn() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        }
+      })
+
+      if (error) throw error
+    } catch (error: any) {
+      console.error('Error:', error)
+      setError(error.message)
+      toast.error(error.message)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,6 +89,26 @@ export default function SignIn() {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-white">Welcome Back</h2>
             <p className="mt-2 text-gray-300">Sign in to your account</p>
+          </div>
+
+          {/* Google Sign In Button */}
+          <div className="mb-6">
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white rounded-lg text-gray-800 hover:bg-gray-100 transition-colors"
+            >
+              <FcGoogle className="w-5 h-5" />
+              <span>Continue with Google</span>
+            </button>
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-700"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-900 text-gray-400">Or continue with email</span>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
