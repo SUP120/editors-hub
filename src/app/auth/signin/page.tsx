@@ -57,22 +57,8 @@ export default function SignIn() {
       if (signInError) throw signInError
 
       if (data.user) {
-        // Check user type and redirect accordingly
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('is_artist')
-          .eq('id', data.user.id)
-          .single()
-
-        if (profileError) throw profileError
-
         toast.success('Welcome back!')
-        
-        if (profile.is_artist) {
-          router.push('/artist/profile')
-        } else {
-          router.push('/browse-works')
-        }
+        router.push('/welcome')
       }
     } catch (error: any) {
       console.error('Error:', error)

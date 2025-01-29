@@ -63,21 +63,17 @@ export default function AuthRedirect() {
 
                 if (artistProfileError) throw artistProfileError
                 console.log('Artist profile created successfully')
-                router.push('/artist/profile')
-              } else {
-                router.push('/browse-works')
               }
+
+              // Redirect to welcome page
+              router.push('/welcome')
             } catch (error: any) {
               console.error('Profile creation error:', error)
               throw error
             }
           } else {
-            // Existing user - redirect based on type
-            if (profile.is_artist) {
-              router.push('/dashboard')
-            } else {
-              router.push('/browse-works')
-            }
+            // Existing user - redirect to welcome page
+            router.push('/welcome')
           }
         }
       } catch (error: any) {
