@@ -6,42 +6,15 @@ import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
-import { FcGoogle } from 'react-icons/fc'
 
 export default function SignIn() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    email: '',
+    phone: '',
     password: ''
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-
-  const handleGoogleSignIn = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        }
-      })
-
-      if (error) throw error
-
-      // Add loading state while redirecting
-      setIsLoading(true)
-      toast.loading('Redirecting to Google...')
-    } catch (error: any) {
-      console.error('Error:', error)
-      setError(error.message)
-      toast.error(error.message)
-      setIsLoading(false)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,15 +23,41 @@ export default function SignIn() {
 
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+        phone: formData.phone,
         password: formData.password
       })
 
       if (signInError) throw signInError
 
       if (data.user) {
+        // Get user profile to check type
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_artist')
+          .eq('id', data.user.id)
+          .single()
+
+        if (profileError) throw profileError
+
         toast.success('Welcome back!')
-        router.push('/welcome')
+        
+        // Redirect based on user type
+        if (profile.is_artist) {
+          // Check if artist has completed their profile
+          const { data: artistProfile } = await supabase
+            .from('artist_profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single()
+
+          if (!artistProfile) {
+            router.push('/artist/complete-profile')
+          } else {
+            router.push('/artist/profile')
+          }
+        } else {
+          router.push('/browse-works')
+        }
       }
     } catch (error: any) {
       console.error('Error:', error)
@@ -82,39 +81,19 @@ export default function SignIn() {
             <p className="mt-2 text-gray-300">Sign in to your account</p>
           </div>
 
-          {/* Google Sign In Button */}
-          <div className="mb-6">
-            <button
-              onClick={handleGoogleSignIn}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white rounded-lg text-gray-800 hover:bg-gray-100 transition-colors"
-            >
-              <FcGoogle className="w-5 h-5" />
-              <span>Continue with Google</span>
-            </button>
-          </div>
-
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">Or continue with email</span>
-            </div>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                Email Address
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-300">
+                Phone Number
               </label>
               <input
-                id="email"
-                type="email"
+                id="phone"
+                type="tel"
                 required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                placeholder="Enter your email"
+                placeholder="Enter your phone number"
               />
             </div>
 

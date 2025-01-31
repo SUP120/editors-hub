@@ -6,45 +6,20 @@ import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
-import { FcGoogle } from 'react-icons/fc'
 
 export default function SignUp() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    email: '',
+    phone: '',
     password: '',
     userType: 'client' as 'client' | 'artist'
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showOTP, setShowOTP] = useState(false)
+  const [otp, setOtp] = useState('')
 
-  const handleGoogleSignUp = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?type=${formData.userType}`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        }
-      })
-
-      if (error) throw error
-
-      // Add loading state while redirecting
-      setIsLoading(true)
-      toast.loading('Redirecting to Google...')
-    } catch (error: any) {
-      console.error('Error:', error)
-      setError(error.message)
-      toast.error(error.message)
-      setIsLoading(false)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
@@ -53,8 +28,8 @@ export default function SignUp() {
       // First check if user already exists
       const { data: existingUser, error: checkError } = await supabase
         .from('profiles')
-        .select('id, is_artist')
-        .eq('email', formData.email)
+        .select('id')
+        .eq('phone_number', formData.phone)
         .single()
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -62,15 +37,13 @@ export default function SignUp() {
       }
 
       if (existingUser) {
-        setError('An account with this email already exists. Please sign in instead.')
+        setError('An account with this phone number already exists. Please sign in instead.')
         return
       }
 
-      console.log('Starting signup process...')
-      
-      // Sign up with email and password
+      // Sign up with phone and password
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
+        phone: formData.phone,
         password: formData.password,
         options: {
           data: {
@@ -81,60 +54,35 @@ export default function SignUp() {
 
       if (signUpError) throw signUpError
       
-      console.log('Auth signup successful:', authData)
-
       if (authData.user) {
-        // Sign in immediately after signup
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        })
-
-        if (signInError) throw signInError
-        console.log('Signed in after signup:', signInData)
-
         // Create profile
-        console.log('Creating profile for user:', authData.user.id)
-        const { data: profileData, error: profileError } = await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: authData.user.id,
-            email: formData.email,
+            phone_number: formData.phone,
             is_artist: formData.userType === 'artist',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
-          .select()
 
-        if (profileError) {
-          console.error('Profile creation error:', profileError)
-          throw new Error(`Failed to create profile: ${profileError.message}`)
-        }
-
-        console.log('Profile created successfully:', profileData)
+        if (profileError) throw profileError
 
         // If artist, create artist profile
         if (formData.userType === 'artist') {
-          console.log('Creating artist profile...')
-          const { data: artistData, error: artistProfileError } = await supabase
+          const { error: artistProfileError } = await supabase
             .from('artist_profiles')
             .insert({
               id: authData.user.id,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
-            .select()
 
-          if (artistProfileError) {
-            console.error('Artist profile creation error:', artistProfileError)
-            throw new Error(`Failed to create artist profile: ${artistProfileError.message}`)
-          }
-
-          console.log('Artist profile created successfully:', artistData)
+          if (artistProfileError) throw artistProfileError
+          
           toast.success('Account created! Please complete your artist profile.')
           router.push('/artist/complete-profile')
         } else {
-          // For clients, redirect to browse works
           toast.success('Account created! Welcome to Editor\'s Hub.')
           router.push('/browse-works')
         }
@@ -193,39 +141,19 @@ export default function SignUp() {
             </p>
           </div>
 
-          {/* Google Sign Up Button */}
-          <div className="mb-6">
-            <button
-              onClick={handleGoogleSignUp}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white rounded-lg text-gray-800 hover:bg-gray-100 transition-colors"
-            >
-              <FcGoogle className="w-5 h-5" />
-              <span>Continue with Google</span>
-            </button>
-          </div>
-
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-900 text-gray-400">Or continue with email</span>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSignUp} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                Email Address
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-300">
+                Phone Number
               </label>
               <input
-                id="email"
-                type="email"
+                id="phone"
+                type="tel"
                 required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                placeholder="Enter your email"
+                placeholder="Enter your phone number"
               />
             </div>
 
