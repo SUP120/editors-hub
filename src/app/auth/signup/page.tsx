@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
-import { Navbar } from '@/components/Navbar'
+import Navbar from '@/components/Navbar'
 
 export default function SignUp() {
   const router = useRouter()
