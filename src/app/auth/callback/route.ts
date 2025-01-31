@@ -30,32 +30,59 @@ export async function GET(request: Request) {
     
     if (error) {
       console.error('Session exchange error:', error)
-      return NextResponse.redirect(new URL('/auth/signin', process.env.NEXT_PUBLIC_SITE_URL))
+      return NextResponse.redirect(new URL('/auth/signin?error=callback_failed', process.env.NEXT_PUBLIC_SITE_URL))
     }
 
     if (!session) {
       console.error('No session available')
-      return NextResponse.redirect(new URL('/auth/signin', process.env.NEXT_PUBLIC_SITE_URL))
+      return NextResponse.redirect(new URL('/auth/signin?error=no_session', process.env.NEXT_PUBLIC_SITE_URL))
     }
 
-    // Get user profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_artist')
-      .eq('id', session.user.id)
-      .single()
+    try {
+      // Get user metadata to check if they're an artist
+      const isArtist = session.user.user_metadata?.is_artist || false
 
-    if (profile) {
-      // Redirect based on user type
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin
-      if (profile.is_artist) {
-        return NextResponse.redirect(new URL('/artist/complete-profile', baseUrl))
-      } else {
-        return NextResponse.redirect(new URL('/browse-works', baseUrl))
+      // Create base profile if it doesn't exist
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: session.user.id,
+          email: session.user.email,
+          is_artist: isArtist,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        })
+
+      if (profileError) throw profileError
+
+      // If user is an artist, create artist profile if it doesn't exist
+      if (isArtist) {
+        const { error: artistProfileError } = await supabase
+          .from('artist_profiles')
+          .upsert({
+            id: session.user.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'id'
+          })
+
+        if (artistProfileError) throw artistProfileError
+
+        // Redirect artist to complete profile
+        return NextResponse.redirect(new URL('/artist/complete-profile', process.env.NEXT_PUBLIC_SITE_URL))
       }
+
+      // Redirect client to browse works
+      return NextResponse.redirect(new URL('/browse-works', process.env.NEXT_PUBLIC_SITE_URL))
+    } catch (error) {
+      console.error('Profile creation error:', error)
+      return NextResponse.redirect(new URL('/auth/signin?error=profile_creation_failed', process.env.NEXT_PUBLIC_SITE_URL))
     }
   }
 
   // Default redirect
-  return NextResponse.redirect(new URL('/auth/signin', process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin))
+  return NextResponse.redirect(new URL('/auth/signin?error=invalid_callback', process.env.NEXT_PUBLIC_SITE_URL))
 } 

@@ -3,196 +3,135 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { toast } from 'react-hot-toast'
-import { createProfile } from '@/app/actions/create-profile'
 
 export default function SignUp() {
-  const router = useRouter()
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    userType: 'client' as 'client' | 'artist'
+    isArtist: false
   })
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const router = useRouter()
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isLoading) return
     setIsLoading(true)
     setError('')
 
     try {
-      // First check if user already exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', formData.email)
-        .single()
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError
-      }
-
-      if (existingUser) {
-        setError('An account with this email already exists. Please sign in instead.')
-        return
-      }
-
-      // Sign up with email and password
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      const { error: signInError } = await supabase.auth.signInWithOtp({
         email: formData.email,
-        password: formData.password,
         options: {
           emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
           data: {
-            is_artist: formData.userType === 'artist'
+            is_artist: formData.isArtist
           }
         }
       })
 
-      if (signUpError) throw signUpError
-      
-      if (authData.user) {
-        try {
-          // Create profiles using server action
-          const result = await createProfile(
-            authData.user.id,
-            formData.email,
-            formData.userType === 'artist'
-          )
-
-          if (!result.success) {
-            throw new Error(result.error || 'Failed to create profile')
-          }
-
-          // Show success message and redirect
-          toast.success('Account created! Please check your email to verify your account.')
-          router.push('/auth/verify')
-        } catch (error: any) {
-          console.error('Profile creation error:', error)
-          // If profile creation fails, attempt to clean up the auth user
-          try {
-            await supabase.auth.admin.deleteUser(authData.user.id)
-          } catch (deleteError) {
-            console.error('Failed to clean up auth user:', deleteError)
-          }
-          throw new Error('Failed to create profile. Please try again.')
-        }
+      if (signInError) {
+        throw signInError
       }
-    } catch (error: any) {
-      console.error('Signup error:', error)
-      setError(error.message || 'An unexpected error occurred')
-      toast.error(error.message || 'An unexpected error occurred')
+
+      // Store artist status in localStorage as backup
+      if (formData.isArtist) {
+        localStorage.setItem('isArtist', 'true')
+      }
+
+      setEmailSent(true)
+    } catch (error) {
+      console.error('Error:', error)
+      setError(error instanceof Error ? error.message : 'Failed to send login link')
     } finally {
       setIsLoading(false)
     }
   }
 
+  if (emailSent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto">
+          <div className="glass-card rounded-xl p-8 text-center">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Check your email
+            </h2>
+            <p className="text-gray-300 mb-4">
+              We&apos;ve sent a magic link to {formData.email}.<br />
+              Click the link in the email to sign in.
+            </p>
+            <p className="text-gray-400 text-sm">
+              {formData.isArtist ? 
+                "After signing in, you&apos;ll be automatically redirected to complete your artist profile." :
+                "After signing in, you&apos;ll be automatically redirected to your dashboard."
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-xl p-8"
-        >
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white">Create Account</h2>
-            <p className="mt-2 text-gray-300">Join as an artist or client</p>
-          </div>
+        <div className="glass-card rounded-xl p-8">
+          <h2 className="text-3xl font-bold text-white text-center mb-8">
+            Create Account
+          </h2>
 
-          <div className="mb-8">
-            <div className="flex justify-center space-x-4">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, userType: 'client' })}
-                className={`px-6 py-3 rounded-lg ${
-                  formData.userType === 'client'
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-gray-700 text-gray-300'
-                }`}
-              >
-                Join as Client
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, userType: 'artist' })}
-                className={`px-6 py-3 rounded-lg ${
-                  formData.userType === 'artist'
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-gray-700 text-gray-300'
-                }`}
-              >
-                Join as Artist
-              </button>
-            </div>
-            <p className="text-gray-400 text-center mt-4">
-              {formData.userType === 'artist'
-                ? 'Create an account to showcase your work and get hired'
-                : 'Create an account to hire talented artists'}
-            </p>
-          </div>
-
-          <form onSubmit={handleSignUp} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                Email Address
-              </label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
               <input
-                id="email"
                 type="email"
+                placeholder="Email"
                 required
+                className="input-field"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                placeholder="Enter your email address"
+                onChange={e => setFormData({...formData, email: e.target.value})}
               />
+              
+              <div className="flex items-center">
+                <input
+                  id="is-artist"
+                  type="checkbox"
+                  className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-700 rounded bg-gray-800"
+                  checked={formData.isArtist}
+                  onChange={e => setFormData({...formData, isArtist: e.target.checked})}
+                />
+                <label htmlFor="is-artist" className="ml-2 block text-sm text-gray-300">
+                  I want to sell my editing services
+                </label>
+              </div>
+
+              <div className="text-sm text-gray-400">
+                We&apos;ll send you a magic link to sign in - no password needed!
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                placeholder="Create a password"
-              />
-            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full glass-button py-3 text-white font-medium rounded-lg disabled:opacity-50"
+            >
+              {isLoading ? 'Sending magic link...' : 'Get magic link'}
+            </button>
 
             {error && (
-              <div className="text-red-400 text-sm text-center">
+              <div className="text-red-500 text-center mt-2">
                 {error}
               </div>
             )}
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              disabled={isLoading}
-              className="w-full glass-button px-6 py-3 rounded-lg text-white font-medium disabled:opacity-50"
-            >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
-            </motion.button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
-              Already have an account?{' '}
+            <div className="text-center text-sm">
               <Link href="/auth/signin" className="text-violet-400 hover:text-violet-300">
-                Sign in
+                Already have an account? Sign in
               </Link>
-            </p>
-          </div>
-        </motion.div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )
