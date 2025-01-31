@@ -10,7 +10,7 @@ import { toast } from 'react-hot-toast'
 export default function SignIn() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    phone: '',
+    email: '',
     password: ''
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -23,13 +23,20 @@ export default function SignIn() {
 
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        phone: formData.phone,
+        email: formData.email,
         password: formData.password
       })
 
       if (signInError) throw signInError
 
       if (data.user) {
+        // Check if email is verified
+        if (!data.user.email_confirmed_at) {
+          toast.error('Please verify your email before signing in')
+          router.push('/auth/verify')
+          return
+        }
+
         // Get user profile to check type
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -83,17 +90,17 @@ export default function SignIn() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-300">
-                Phone Number
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                Email Address
               </label>
               <input
-                id="phone"
-                type="tel"
+                id="email"
+                type="email"
                 required
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                placeholder="Enter your phone number"
+                placeholder="Enter your email address"
               />
             </div>
 

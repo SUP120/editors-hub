@@ -6,18 +6,17 @@ import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
+import { createProfile } from '@/app/actions/create-profile'
 
 export default function SignUp() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    phone: '',
+    email: '',
     password: '',
     userType: 'client' as 'client' | 'artist'
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showOTP, setShowOTP] = useState(false)
-  const [otp, setOtp] = useState('')
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,7 +28,7 @@ export default function SignUp() {
       const { data: existingUser, error: checkError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('phone_number', formData.phone)
+        .eq('email', formData.email)
         .single()
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -37,15 +36,16 @@ export default function SignUp() {
       }
 
       if (existingUser) {
-        setError('An account with this phone number already exists. Please sign in instead.')
+        setError('An account with this email already exists. Please sign in instead.')
         return
       }
 
-      // Sign up with phone and password
+      // Sign up with email and password
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        phone: formData.phone,
+        email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
           data: {
             is_artist: formData.userType === 'artist'
           }
@@ -55,36 +55,30 @@ export default function SignUp() {
       if (signUpError) throw signUpError
       
       if (authData.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            phone_number: formData.phone,
-            is_artist: formData.userType === 'artist',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
+        try {
+          // Create profiles using server action
+          const result = await createProfile(
+            authData.user.id,
+            formData.email,
+            formData.userType === 'artist'
+          )
 
-        if (profileError) throw profileError
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to create profile')
+          }
 
-        // If artist, create artist profile
-        if (formData.userType === 'artist') {
-          const { error: artistProfileError } = await supabase
-            .from('artist_profiles')
-            .insert({
-              id: authData.user.id,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-
-          if (artistProfileError) throw artistProfileError
-          
-          toast.success('Account created! Please complete your artist profile.')
-          router.push('/artist/complete-profile')
-        } else {
-          toast.success('Account created! Welcome to Editor\'s Hub.')
-          router.push('/browse-works')
+          // Show success message and redirect
+          toast.success('Account created! Please check your email to verify your account.')
+          router.push('/auth/verify')
+        } catch (error: any) {
+          console.error('Profile creation error:', error)
+          // If profile creation fails, attempt to clean up the auth user
+          try {
+            await supabase.auth.admin.deleteUser(authData.user.id)
+          } catch (deleteError) {
+            console.error('Failed to clean up auth user:', deleteError)
+          }
+          throw new Error('Failed to create profile. Please try again.')
         }
       }
     } catch (error: any) {
@@ -143,17 +137,17 @@ export default function SignUp() {
 
           <form onSubmit={handleSignUp} className="space-y-6">
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-300">
-                Phone Number
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                Email Address
               </label>
               <input
-                id="phone"
-                type="tel"
+                id="email"
+                type="email"
                 required
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="mt-1 block w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white"
-                placeholder="Enter your phone number"
+                placeholder="Enter your email address"
               />
             </div>
 
