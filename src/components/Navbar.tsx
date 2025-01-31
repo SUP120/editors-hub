@@ -12,6 +12,7 @@ export default function Navbar() {
   const [isArtist, setIsArtist] = useState(false)
   const [loading, setLoading] = useState(true)
   const [pendingOrders, setPendingOrders] = useState(0)
+  const [hasCompletedProfile, setHasCompletedProfile] = useState(true)
 
   useEffect(() => {
     checkUser()
@@ -21,10 +22,12 @@ export default function Navbar() {
         if (user) {
           setUser(user)
           checkArtistStatus(user.id)
+          checkProfileCompletion(user.id)
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setIsArtist(false)
+        setHasCompletedProfile(true)
       }
     })
 
@@ -33,6 +36,21 @@ export default function Navbar() {
     }
   }, [])
 
+  const checkProfileCompletion = async (userId: string) => {
+    try {
+      const { data: artistProfile } = await supabase
+        .from('artist_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      setHasCompletedProfile(!!artistProfile)
+    } catch (error) {
+      console.error('Error checking profile completion:', error)
+      setHasCompletedProfile(false)
+    }
+  }
+
   const checkUser = async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -40,16 +58,35 @@ export default function Navbar() {
 
       if (user) {
         setUser(user)
-        const { data: profile } = await supabase
+        // Get user profile with is_artist field
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('is_artist')
           .eq('id', user.id)
           .single()
 
-        setIsArtist(profile?.is_artist || false)
+        if (profileError) throw profileError
+        
+        const isUserArtist = profile?.is_artist || false
+        setIsArtist(isUserArtist)
 
-        // If user is an artist, fetch pending orders count
-        if (profile?.is_artist) {
+        if (isUserArtist) {
+          // Check if artist has completed their profile by checking artist_profiles table
+          const { data: artistProfile, error: artistProfileError } = await supabase
+            .from('artist_profiles')
+            .select('id, specialty, skills, hourly_rate')
+            .eq('id', user.id)
+            .single()
+
+          // If no artist profile exists or it's incomplete, set hasCompletedProfile to false
+          setHasCompletedProfile(
+            !!artistProfile && 
+            !!artistProfile.specialty?.length && 
+            !!artistProfile.skills?.length && 
+            !!artistProfile.hourly_rate
+          )
+
+          // Fetch pending orders
           const { count } = await supabase
             .from('orders')
             .select('*', { count: 'exact', head: true })
@@ -70,7 +107,6 @@ export default function Navbar() {
                 filter: `artist_id=eq.${user.id}`,
               },
               () => {
-                // Refresh pending orders count
                 fetchPendingOrdersCount(user.id)
               }
             )
@@ -150,22 +186,36 @@ export default function Navbar() {
 
                     <Link
                       href="/orders"
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                      className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium"
                     >
                       My Orders
                     </Link>
 
                     {isArtist && (
                       <>
-                        <Link href="/artist/profile" className="text-gray-300 hover:text-white">
+                        {!hasCompletedProfile && (
+                          <Link 
+                            href="/artist/complete-profile"
+                            className="text-yellow-400 hover:text-yellow-300 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800 animate-pulse"
+                          >
+                            Complete Your Artist Profile
+                          </Link>
+                        )}
+                        <Link 
+                          href="/artist/profile" 
+                          className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium"
+                        >
                           Artist Profile
                         </Link>
-                        <Link href="/artist/wallet" className="text-gray-300 hover:text-white">
+                        <Link 
+                          href="/artist/wallet" 
+                          className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium"
+                        >
                           Wallet
                         </Link>
                         <Link 
                           href="/artist/notifications" 
-                          className="text-gray-300 hover:text-white relative"
+                          className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium relative"
                         >
                           Notifications
                           {pendingOrders > 0 && (
