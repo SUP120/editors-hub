@@ -332,7 +332,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
         const issues = prompt('Please describe the issues with the work:')
         if (!issues) return
 
-        await supabase
+        const { error: updateError } = await supabase
           .from('orders')
           .update({
             status: 'revision_needed',
@@ -341,8 +341,10 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           })
           .eq('id', orderId)
 
+        if (updateError) throw updateError
+
         // Record the incident
-        await supabase
+        const { error: incidentError } = await supabase
           .from('artist_incidents')
           .insert({
             artist_id: order.artist_id,
@@ -352,8 +354,10 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             reported_at: new Date().toISOString()
           })
 
+        if (incidentError) throw incidentError
+
         // Send system message about the issues
-        await supabase
+        const { error: messageError } = await supabase
           .from('messages')
           .insert({
             order_id: orderId,
@@ -362,30 +366,49 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             created_at: new Date().toISOString(),
             is_system_message: true
           })
+
+        if (messageError) throw messageError
+
+        toast.success('Issues reported successfully. The artist will be notified.')
+        await fetchOrderDetails()
       } else {
-        // Complete the order successfully and credit artist's wallet
-        const { data: walletData, error: walletError } = await supabase
-          .from('artist_wallet')
-          .select('current_balance, total_earned')
-          .eq('artist_id', order.artist_id)
-          .single()
-
-        if (walletError) throw walletError
-
         // Calculate artist's share (total amount minus platform fee)
         const artistShare = order.total_amount - order.platform_fee
 
-        // Update artist's wallet balance
-        const { error: updateWalletError } = await supabase
+        // First check if wallet exists for the artist
+        const { data: existingWallet, error: walletCheckError } = await supabase
           .from('artist_wallet')
-          .update({ 
-            current_balance: ((walletData?.current_balance as number) || 0) + artistShare,
-            total_earned: ((walletData?.total_earned as number) || 0) + artistShare,
-            last_updated: new Date().toISOString()
-          })
+          .select('current_balance, total_earned')
           .eq('artist_id', order.artist_id)
+          .maybeSingle()
 
-        if (updateWalletError) throw updateWalletError
+        if (walletCheckError) throw walletCheckError
+
+        // If wallet doesn't exist, create it
+        if (!existingWallet) {
+          const { error: createWalletError } = await supabase
+            .from('artist_wallet')
+            .insert({
+              artist_id: order.artist_id,
+              current_balance: artistShare,
+              total_earned: artistShare,
+              last_updated: new Date().toISOString()
+            })
+
+          if (createWalletError) throw createWalletError
+        } else {
+          // Update artist's wallet balance
+          const { error: updateWalletError } = await supabase
+            .from('artist_wallet')
+            .update({ 
+              current_balance: existingWallet.current_balance + artistShare,
+              total_earned: existingWallet.total_earned + artistShare,
+              last_updated: new Date().toISOString()
+            })
+            .eq('artist_id', order.artist_id)
+
+          if (updateWalletError) throw updateWalletError
+        }
 
         // Update order status
         const { error: orderError } = await supabase
@@ -399,38 +422,25 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
 
         if (orderError) throw orderError
 
-        // Record the transaction
-        const { error: transactionError } = await supabase
-          .from('transaction_history')
-          .insert({
-            artist_id: order.artist_id,
-            order_id: orderId,
-            amount: artistShare,
-            type: 'credit',
-            description: `Payment for order #${orderId}`,
-            created_at: new Date().toISOString()
-          })
-
-        if (transactionError) throw transactionError
-
-        // Send congratulatory message with payment details
-        await supabase
+        // Send system message about completion
+        const { error: messageError } = await supabase
           .from('messages')
           .insert({
             order_id: orderId,
             sender_id: user.id,
-            content: `🎉 Project completed successfully! ₹${artistShare} has been credited to the artist's wallet.`,
+            content: '✅ Order marked as completed by the client.',
             created_at: new Date().toISOString(),
             is_system_message: true
           })
-      }
 
-      await fetchOrderDetails()
-      await fetchMessages()
+        if (messageError) throw messageError
+
+        toast.success('Order completed successfully! The artist has been credited.')
+        await fetchOrderDetails()
+      }
     } catch (error: any) {
-      console.error('Error in client verification:', error)
-      setError(error.message)
-      toast.error('Failed to process completion. Please try again.')
+      console.error('Error verifying completion:', error)
+      toast.error(error.message || 'Failed to verify completion')
     }
   }
 

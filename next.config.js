@@ -1,21 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
+  images: {
+    domains: ['ixgkcseieqsayechntmx.supabase.co'],
   },
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    domains: ['ixgkcseieqsayechntmx.supabase.co'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'ixgkcseieqsayechntmx.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/public/**',
-      },
-    ],
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   env: {
     NEXT_PUBLIC_SITE_URL: process.env.NODE_ENV === 'development' 

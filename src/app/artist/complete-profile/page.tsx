@@ -96,10 +96,10 @@ export default function CompleteArtistProfile() {
       
       if (profileError) throw profileError
 
-      // Create artist profile
+      // Update or create artist profile
       const { error: artistError } = await supabase
         .from('artist_profiles')
-        .insert([{
+        .upsert([{
           id: user.id,
           specialty: formData.specialties.filter(s => s),
           skills: formData.skills.filter(s => s),
@@ -110,7 +110,6 @@ export default function CompleteArtistProfile() {
           certifications: formData.certifications.filter(cert => cert),
           languages: formData.languages.filter(lang => lang),
           social_links: formData.socialLinks,
-          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }])
 

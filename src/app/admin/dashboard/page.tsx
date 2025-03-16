@@ -122,9 +122,13 @@ export default function AdminDashboard() {
   const [issues, setIssues] = useState<Issue[]>([])
   const [activeTab, setActiveTab] = useState('artists')
 
+  // Add new state for admin users
+  const [adminUsers, setAdminUsers] = useState<Array<{id: string, email: string, full_name: string}>>([])
+
   useEffect(() => {
     checkAdmin()
     fetchData()
+    fetchAdminUsers()
   }, [])
 
   const checkAdmin = async () => {
@@ -419,6 +423,73 @@ export default function AdminDashboard() {
     }
   }
 
+  // Add new function to fetch admin users
+  const fetchAdminUsers = async () => {
+    try {
+      const { data: admins, error } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .eq('is_admin', true)
+
+      if (error) throw error
+      setAdminUsers(admins || [])
+    } catch (error: any) {
+      console.error('Error fetching admin users:', error)
+      toast.error('Failed to fetch admin users')
+    }
+  }
+
+  // Add function to grant admin access
+  const grantAdminAccess = async (email: string) => {
+    try {
+      // First find the user by email
+      const { data: user, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single()
+
+      if (userError) throw userError
+
+      if (!user) {
+        toast.error('User not found')
+        return
+      }
+
+      // Update the user's admin status
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ is_admin: true })
+        .eq('id', user.id)
+
+      if (updateError) throw updateError
+
+      toast.success('Admin access granted successfully')
+      fetchAdminUsers() // Refresh the admin users list
+    } catch (error: any) {
+      console.error('Error granting admin access:', error)
+      toast.error('Failed to grant admin access')
+    }
+  }
+
+  // Add function to revoke admin access
+  const revokeAdminAccess = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_admin: false })
+        .eq('id', userId)
+
+      if (error) throw error
+
+      toast.success('Admin access revoked successfully')
+      fetchAdminUsers() // Refresh the admin users list
+    } catch (error: any) {
+      console.error('Error revoking admin access:', error)
+      toast.error('Failed to revoke admin access')
+    }
+  }
+
   if (loading) {
     return <LoadingSpinner fullScreen text="Loading admin dashboard..." />
   }
@@ -462,7 +533,7 @@ export default function AdminDashboard() {
 
         {/* Navigation Tabs */}
         <div className="flex space-x-4 mb-6">
-          {['artists', 'clients', 'issues'].map((tabName) => (
+          {['artists', 'clients', 'issues', 'admins'].map((tabName) => (
             <button
               key={tabName}
               onClick={() => setActiveTab(tabName)}
@@ -568,6 +639,69 @@ export default function AdminDashboard() {
               ))}
               {issues.length === 0 && (
                 <p className="text-gray-400 text-center py-4">No unresolved issues</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'admins' && (
+          <div className="bg-gray-800 bg-opacity-50 rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-4">Admin Management</h2>
+            
+            {/* Grant Admin Access Form */}
+            <div className="mb-8 bg-gray-700 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-white mb-4">Grant Admin Access</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault()
+                const email = (e.target as any).email.value
+                await grantAdminAccess(email)
+                ;(e.target as any).email.value = ''
+              }} className="flex gap-4">
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter user email"
+                  className="flex-1 px-4 py-2 rounded-lg bg-gray-600 text-white placeholder-gray-400 border border-gray-500 focus:outline-none focus:border-purple-500"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+                >
+                  Grant Access
+                </button>
+              </form>
+            </div>
+
+            {/* Admin Users List */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-700">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {adminUsers.map((admin) => (
+                    <tr key={admin.id} className="hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{admin.full_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{admin.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <button
+                          onClick={() => revokeAdminAccess(admin.id)}
+                          className="text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          Revoke Access
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {adminUsers.length === 0 && (
+                <p className="text-gray-400 text-center py-4">No admin users found</p>
               )}
             </div>
           </div>
