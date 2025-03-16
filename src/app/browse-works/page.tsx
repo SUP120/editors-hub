@@ -265,305 +265,286 @@ export default function BrowseWorks() {
   }, [selectedCategory])
 
   return (
-    <div className="min-h-screen bg-[#0f172a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-violet-900/50 to-[#0f172a]"></div>
-        <div className="relative max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8">
-          <motion.div 
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-violet-900 py-8 px-4 sm:px-6 lg:px-8">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute bg-white/5 rounded-full"
+            style={{
+              width: Math.random() * 300 + 50,
+              height: Math.random() * 300 + 50,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.1, 0.2, 0.1],
+              rotate: [0, 360],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-violet-400 to-purple-400 mb-4">
+            Discover Amazing Works
+          </h1>
+          <p className="text-blue-200 text-lg max-w-2xl mx-auto">
+            Explore a curated collection of stunning works from talented artists around the world
+          </p>
+        </motion.div>
+
+        {/* Search and Filter Section */}
+        <div className="mb-8">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative mb-8"
+            className="glass-card backdrop-blur-sm rounded-xl p-6 border border-violet-500/20"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
-            <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl text-center">
-              <h1 className="text-4xl md:text-5xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-400 mb-6">
-                Discover Amazing Creative Works
-              </h1>
-              <p className="text-xl text-gray-300 mb-8">
-                Find the perfect artist for your next project
-              </p>
-              
-              {/* Search Bar */}
-              <div className="max-w-2xl mx-auto relative">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <FiSearch className="w-5 h-5 text-gray-400" />
-                </div>
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              {/* Search Input */}
+              <div className="relative flex-1 w-full">
+                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search works by title, description, or tags..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 
-                           focus:outline-none focus:ring-2 focus:ring-violet-500 backdrop-blur-xl"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200"
                 />
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-white/5 hover:bg-white/10 
-                           text-gray-300 hover:text-white transition-all border border-white/10"
+              </div>
+
+              {/* Category Selector */}
+              <div className="flex-shrink-0 w-full md:w-48">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200"
                 >
-                  <FiFilter className="w-5 h-5" />
-                </motion.button>
+                  {categories.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-8"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-2xl blur-xl" />
-                <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 shadow-xl">
-                  <div className="space-y-6">
-                    {/* Category Filters */}
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-300 mb-3">Categories</h3>
-                      <div className="flex flex-wrap gap-3">
-                        {categories.map((category) => (
-                          <motion.button
-                            key={category.value}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setSelectedCategory(category.value)}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all
-                                     ${selectedCategory === category.value
-                                       ? 'bg-violet-500 text-white'
-                                       : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
-                                     }`}
-                          >
-                            {category.label}
-                          </motion.button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Sort and Price Range Filters */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Sort Options */}
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-300 mb-3">Sort By</h3>
-                        <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value as SortOption)}
-                          className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white 
-                                   focus:outline-none focus:ring-2 focus:ring-violet-500 backdrop-blur-sm"
-                        >
-                          {sortOptions.map((option) => (
-                            <option key={option.value} value={option.value} className="bg-gray-900">
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Price Range Filter */}
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-300 mb-3">Price Range (₹)</h3>
-                        <div className="flex items-center gap-4">
-                          <input
-                            type="number"
-                            value={priceRange.min}
-                            onChange={(e) => setPriceRange(prev => ({ 
-                              ...prev, 
-                              min: parseInt(e.target.value) || 0,
-                              max: Math.max(prev.max, parseInt(e.target.value) || 0)
-                            }))}
-                            placeholder="Min"
-                            min="0"
-                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white 
-                                     focus:outline-none focus:ring-2 focus:ring-violet-500 backdrop-blur-sm"
-                          />
-                          <span className="text-gray-400">to</span>
-                          <input
-                            type="number"
-                            value={priceRange.max}
-                            onChange={(e) => setPriceRange(prev => ({ 
-                              ...prev, 
-                              max: parseInt(e.target.value) || prev.max,
-                              min: Math.min(prev.min, parseInt(e.target.value) || prev.min)
-                            }))}
-                            placeholder="Max"
-                            min="0"
-                            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white 
-                                     focus:outline-none focus:ring-2 focus:ring-violet-500 backdrop-blur-sm"
-                          />
-                        </div>
-                        <button
-                          onClick={() => setPriceRange({ min: 0, max: 100000 })}
-                          className="mt-2 text-sm text-violet-400 hover:text-violet-300 transition-colors"
-                        >
-                          Reset Price Range
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* Sort Selector */}
+              <div className="flex-shrink-0 w-full md:w-48">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200"
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Works Grid */}
-        {loading && page === 1 ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-violet-500"></div>
-          </div>
-        ) : error ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
-            <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl text-center">
-              <p className="text-red-400 mb-4">Error: {error}</p>
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => window.location.reload()} 
-                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium
-                         hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all"
+              {/* Filter Toggle Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex-shrink-0 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
               >
-                Try Again
+                <FiFilter />
+                <span>Filters</span>
               </motion.button>
             </div>
-          </motion.div>
-        ) : sortedAndFilteredWorks.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-3xl blur-3xl" />
-            <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-xl text-center">
-              <h3 className="text-xl text-white mb-4">No works found</h3>
-              <p className="text-gray-400">Try adjusting your search or filters</p>
-            </div>
-          </motion.div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {sortedAndFilteredWorks.map((work, index) => (
+
+            {/* Advanced Filters */}
+            <AnimatePresence>
+              {showFilters && (
                 <motion.div
-                  key={work.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="relative group"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="mt-6 pt-6 border-t border-gray-700"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 rounded-2xl blur-xl" />
-                  <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
-                    <div className="relative aspect-video">
-                      {work.images[0] ? (
-                        <>
-                          <Image
-                            src={work.images[0].startsWith('http') 
-                              ? work.images[0] 
-                              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${work.images[0]}`}
-                            alt={work.title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-transparent 
-                                      opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
-                        </>
-                      ) : (
-                        <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                          <FiPackage className="w-12 h-12 text-gray-400" />
-                        </div>
-                      )}
-                      <div className="absolute top-4 right-4">
-                        <div className="px-3 py-1 rounded-xl text-xs font-medium backdrop-blur-sm
-                                    bg-violet-400/10 text-violet-300 border border-violet-400/20">
-                          {work.category}
-                        </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-blue-200 mb-2">
+                        Price Range
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="number"
+                          placeholder="Min"
+                          value={priceRange.min}
+                          onChange={(e) => setPriceRange({ ...priceRange, min: Number(e.target.value) })}
+                          className="w-full px-4 py-2 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                        />
+                        <span className="text-gray-400">to</span>
+                        <input
+                          type="number"
+                          placeholder="Max"
+                          value={priceRange.max}
+                          onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })}
+                          className="w-full px-4 py-2 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                        />
                       </div>
-                    </div>
-
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-xl font-semibold text-white group-hover:text-violet-400 transition-colors truncate">
-                          {work.title}
-                        </h3>
-                      </div>
-
-                      <p className="text-gray-300 text-sm mb-4 line-clamp-2">
-                        {work.description}
-                      </p>
-
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10">
-                          <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                            <FiDollarSign className="w-4 h-4" />
-                            <span>Price</span>
-                          </div>
-                          <p className="text-white">₹{work.price}</p>
-                        </div>
-                        <div className="bg-white/5 rounded-xl p-3 backdrop-blur-sm border border-white/10">
-                          <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                            <FiClock className="w-4 h-4" />
-                            <span>Delivery</span>
-                          </div>
-                          <p className="text-white">{work.delivery_time} days</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <FiUser className="w-4 h-4" />
-                          <span className="text-sm">{work.profiles?.full_name}</span>
-                        </div>
-                        <div className="flex gap-2">
-                          {work.tags.slice(0, 2).map((tag, index) => (
-                            <span
-                              key={index}
-                              className="bg-violet-400/10 text-violet-300 px-2 py-1 rounded-xl text-xs
-                                       border border-violet-400/20 backdrop-blur-sm"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {work.tags.length > 2 && (
-                            <span className="text-gray-400 text-xs flex items-center">
-                              +{work.tags.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => router.push(`/works/${work.id}`)}
-                        className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium
-                                 hover:from-purple-600 hover:to-indigo-600 transform hover:-translate-y-0.5 transition-all"
-                      >
-                        Hire for Work
-                      </motion.button>
                     </div>
                   </div>
                 </motion.div>
-              ))}
-            </div>
-            
-            {/* Loading sentinel for infinite scroll */}
-            <div id="sentinel" className="h-20 flex items-center justify-center">
-              {loading && hasMore && (
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-violet-500"></div>
               )}
-            </div>
-          </>
+            </AnimatePresence>
+          </motion.div>
+        </div>
+
+        {/* Works Grid */}
+        {loading ? (
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-400 bg-red-400/10 rounded-lg p-4 border border-red-400/20">
+            {error}
+          </div>
+        ) : sortedAndFilteredWorks.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
+          >
+            <div className="text-gray-400 text-lg">No works found matching your criteria</div>
+            <button
+              onClick={() => {
+                setSearchQuery('')
+                setSelectedCategory('all')
+                setPriceRange({ min: 0, max: 100000 })
+              }}
+              className="mt-4 text-violet-400 hover:text-violet-300 transition-colors duration-200"
+            >
+              Clear all filters
+            </button>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedAndFilteredWorks.map((work, index) => (
+              <motion.div
+                key={work.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -5 }}
+                className="group relative"
+              >
+                <div className="glass-card overflow-hidden rounded-xl border border-violet-500/20 transition-all duration-300 group-hover:border-violet-500/40 group-hover:shadow-lg group-hover:shadow-violet-500/10">
+                  {/* Work Image */}
+                  <div className="relative aspect-video overflow-hidden">
+                    {work.images && work.images[0] ? (
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${work.images[0]}`}
+                        alt={work.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                        <FiPackage className="w-12 h-12 text-gray-600" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
+
+                  {/* Work Details */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-white mb-2 line-clamp-2">
+                      {work.title}
+                    </h3>
+                    <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                      {work.description}
+                    </p>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {work.tags.slice(0, 3).map((tag, i) => (
+                        <span
+                          key={i}
+                          className="text-xs px-2 py-1 rounded-full bg-violet-400/10 text-violet-300 border border-violet-400/20"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {work.tags.length > 3 && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-violet-400/10 text-violet-300 border border-violet-400/20">
+                          +{work.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Work Info */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-violet-400">
+                        <FiDollarSign className="w-4 h-4" />
+                        <span>₹{work.price}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-blue-400">
+                        <FiClock className="w-4 h-4" />
+                        <span>{work.delivery_time} days</span>
+                      </div>
+                    </div>
+
+                    {/* Artist Info */}
+                    <div className="mt-4 pt-4 border-t border-gray-700 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-violet-400/20 flex items-center justify-center">
+                        <FiUser className="w-4 h-4 text-violet-400" />
+                      </div>
+                      <div>
+                        <p className="text-white text-sm font-medium">
+                          {work.profiles.full_name || 'Anonymous Artist'}
+                        </p>
+                        <p className="text-gray-400 text-xs">
+                          {work.category}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* View Details Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => router.push(`/works/${work.id}`)}
+                      className="mt-4 w-full py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200"
+                    >
+                      View Details
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Load More */}
+        {hasMore && !loading && (
+          <div className="mt-8 text-center">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={loadMore}
+              className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200"
+            >
+              Load More Works
+            </motion.button>
+          </div>
         )}
       </div>
     </div>

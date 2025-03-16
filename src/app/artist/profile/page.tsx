@@ -228,33 +228,39 @@ export default function ArtistProfile() {
                   <div>
                     <p className="text-sm text-violet-400 mb-2">Specialties</p>
                     <div className="flex flex-wrap gap-2">
-                      {artistProfile?.specialty.map((specialty, index) => (
+                      {(artistProfile?.specialty || []).map((specialty, index) => (
                         <span key={index} className="bg-violet-400/10 text-violet-300 px-3 py-1 rounded-xl text-sm
                                                    border border-violet-400/20 backdrop-blur-sm">
                           {specialty}
                         </span>
                       ))}
+                      {(!artistProfile?.specialty || artistProfile.specialty.length === 0) && (
+                        <span className="text-gray-400 text-sm">No specialties added yet</span>
+                      )}
                     </div>
                   </div>
                   <div>
                     <p className="text-sm text-violet-400 mb-2">Skills</p>
                     <div className="flex flex-wrap gap-2">
-                      {artistProfile?.skills.map((skill, index) => (
+                      {(artistProfile?.skills || []).map((skill, index) => (
                         <span key={index} className="bg-indigo-400/10 text-indigo-300 px-3 py-1 rounded-xl text-sm
                                                    border border-indigo-400/20 backdrop-blur-sm">
                           {skill}
                         </span>
                       ))}
+                      {(!artistProfile?.skills || artistProfile.skills.length === 0) && (
+                        <span className="text-gray-400 text-sm">No skills added yet</span>
+                      )}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                       <p className="text-sm text-violet-400">Hourly Rate</p>
-                      <p className="text-2xl font-bold text-white mt-1">₹{artistProfile?.hourly_rate}/hr</p>
+                      <p className="text-2xl font-bold text-white mt-1">₹{artistProfile?.hourly_rate || 0}/hr</p>
                     </div>
                     <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                       <p className="text-sm text-violet-400">Experience</p>
-                      <p className="text-2xl font-bold text-white mt-1">{artistProfile?.years_of_experience} years</p>
+                      <p className="text-2xl font-bold text-white mt-1">{artistProfile?.years_of_experience || 0} years</p>
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
@@ -262,8 +268,8 @@ export default function ArtistProfile() {
                       <p className="text-sm text-violet-400">Rating</p>
                       <div className="flex items-center gap-1">
                         <FiStar className="text-yellow-400 w-4 h-4" />
-                        <span className="text-xl font-bold text-white">{artistProfile?.rating?.toFixed(1)}</span>
-                        <span className="text-gray-400 text-sm">({artistProfile?.total_reviews} reviews)</span>
+                        <span className="text-xl font-bold text-white">{(artistProfile?.rating || 0).toFixed(1)}</span>
+                        <span className="text-gray-400 text-sm">({artistProfile?.total_reviews || 0} reviews)</span>
                       </div>
                     </div>
                   </div>

@@ -4,6 +4,8 @@ import React, { useEffect, useState, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
+import { sendEmail } from '@/lib/email'
+import { emailTemplates } from '@/lib/email-templates'
 
 type Message = {
   id: string
@@ -154,6 +156,47 @@ export default function ChatPage({ params }: { params: Promise<{ orderId: string
 
       if (error) throw error
       setNewMessage('')
+      
+      // Send email notification to the other party
+      try {
+        if (order) {
+          // Determine recipient (if sender is artist, send to client, and vice versa)
+          const isUserArtist = user.id === order.artist_id
+          const recipientId = isUserArtist ? order.client_id : order.artist_id
+          
+          // Get recipient's email
+          const { data: recipientData, error: recipientError } = await supabase
+            .from('profiles')
+            .select('email, full_name')
+            .eq('id', recipientId)
+            .single()
+            
+          if (recipientError) {
+            console.error('Error fetching recipient:', recipientError)
+          } else if (recipientData) {
+            // Get sender's name
+            const { data: senderData, error: senderError } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', user.id)
+              .single()
+              
+            if (senderError) {
+              console.error('Error fetching sender:', senderError)
+            } else if (senderData) {
+              // Send email notification
+              await sendEmail({
+                to: recipientData.email,
+                ...emailTemplates.newMessage(order, senderData.full_name)
+              })
+              console.log('Message notification email sent to:', recipientData.email)
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error('Error sending message notification email:', emailError)
+        // Don't block the message sending process if email fails
+      }
     } catch (error: any) {
       console.error('Error sending message:', error)
       setError(error.message)

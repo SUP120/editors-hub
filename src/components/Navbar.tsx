@@ -168,7 +168,28 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="text-xl font-bold text-white">
-              Editor's Hub
+              Artist Hiring Platform
+            </Link>
+          </div>
+
+          <div className="hidden md:flex items-center space-x-4">
+            <Link 
+              href="/about"
+              className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
+            >
+              About
+            </Link>
+            <Link 
+              href="/services"
+              className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
+            >
+              Services
+            </Link>
+            <Link 
+              href="/contact"
+              className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
+            >
+              Contact
             </Link>
           </div>
 

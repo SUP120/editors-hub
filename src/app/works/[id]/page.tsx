@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
+import { sendOrderNotification } from '@/lib/email'
 import { FiClock, FiDollarSign, FiRepeat, FiList, FiUser, FiMail, FiTag, FiX } from 'react-icons/fi'
 
 type WorkDetails = {
@@ -130,7 +131,8 @@ export default function WorkDetails({ params }: { params: { id: string } }) {
 
       if (error) throw error
 
-      // Send email notification (we'll implement this next)
+      // Send email notification
+      await sendOrderNotification(data.id)
       
       router.push(`/orders/${data.id}`)
     } catch (error: any) {

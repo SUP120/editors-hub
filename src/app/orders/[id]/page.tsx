@@ -11,6 +11,8 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import StatusMessage from '@/components/StatusMessage'
 import { toast } from 'react-hot-toast'
 import { FiCheck, FiCreditCard, FiDollarSign, FiUser, FiPackage } from 'react-icons/fi'
+import { sendEmail, sendOrderStatusUpdate, sendFinalCompletionNotification, sendPaymentNotification } from '@/lib/email'
+import { emailTemplates } from '@/lib/email-templates'
 
 type Message = {
   id: string
@@ -236,6 +238,34 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
       setMessages(prev => [...prev, completeMessage])
       setNewMessage('')
       scrollToBottom()
+      
+      // Send email notification to the other party
+      try {
+        // Determine recipient (if sender is artist, send to client, and vice versa)
+        const isUserArtist = user.id === order.artist_id
+        const recipientId = isUserArtist ? order.client_id : order.artist_id
+        
+        // Get recipient's email
+        const { data: recipientData, error: recipientError } = await supabase
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', recipientId)
+          .single()
+          
+        if (recipientError) {
+          console.error('Error fetching recipient:', recipientError)
+        } else if (recipientData) {
+          // Send email notification
+          await sendEmail({
+            to: recipientData.email,
+            ...emailTemplates.newMessage(order, senderData.full_name)
+          })
+          console.log('Message notification email sent to:', recipientData.email)
+        }
+      } catch (emailError) {
+        console.error('Error sending message notification email:', emailError)
+        // Don't block the message sending process if email fails
+      }
     } catch (error: any) {
       console.error('Error sending message:', error)
       setError(error.message)
@@ -315,6 +345,9 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           is_system_message: true
         })
 
+      // Send email notification
+      await sendOrderStatusUpdate(orderId, 'completed')
+
       await fetchOrderDetails()
       await fetchMessages()
     } catch (error: any) {
@@ -368,6 +401,9 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           })
 
         if (messageError) throw messageError
+
+        // Send email notification about revision request
+        await sendOrderStatusUpdate(orderId, 'revision_needed')
 
         toast.success('Issues reported successfully. The artist will be notified.')
         await fetchOrderDetails()
@@ -434,6 +470,9 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           })
 
         if (messageError) throw messageError
+
+        // Send final completion email notifications
+        await sendFinalCompletionNotification(orderId)
 
         toast.success('Order completed successfully! The artist has been credited.')
         await fetchOrderDetails()
@@ -528,12 +567,27 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
           is_system_message: true
         })
 
-      toast.success('Payment completed successfully!')
-      await fetchOrderDetails()
-      await fetchMessages()
+      // Send email notification about payment
+      let emailResult = null;
+      try {
+        console.log('Sending payment notification emails for order:', orderId);
+        emailResult = await sendPaymentNotification(orderId);
+        console.log('Payment notification emails sent successfully:', emailResult);
+        
+        // Display success message about emails
+        toast.success('Payment completed and notification emails sent!');
+      } catch (emailError) {
+        console.error('Error sending payment notification emails:', emailError);
+        // Still show success for payment but mention email issue
+        toast.success('Payment completed successfully!');
+        toast.error('There was an issue sending notification emails. The team has been notified.');
+      }
+
+      await fetchOrderDetails();
+      await fetchMessages();
     } catch (error: any) {
-      console.error('Error processing payment:', error)
-      toast.error('Failed to process payment')
+      console.error('Error processing payment:', error);
+      toast.error('Failed to process payment');
     }
   }
 
