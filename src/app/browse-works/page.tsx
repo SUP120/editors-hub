@@ -41,6 +41,8 @@ export default function BrowseWorks() {
   const [showFilters, setShowFilters] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [numBackgroundElements, setNumBackgroundElements] = useState(10)
+  const [backgroundElementSizes, setBackgroundElementSizes] = useState<Array<{ width: number, height: number }>>([])
   const ITEMS_PER_PAGE = 12
 
   const categories = [
@@ -240,22 +242,28 @@ export default function BrowseWorks() {
 
   // Add intersection observer for infinite scroll
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMore()
+          loadMore();
         }
       },
       { threshold: 0.1 }
-    )
+    );
 
-    const sentinel = document.getElementById('sentinel')
-    if (sentinel) {
-      observer.observe(sentinel)
+    const loadingTrigger = document.getElementById('loading-trigger');
+    if (loadingTrigger) {
+      observer.observe(loadingTrigger);
     }
 
-    return () => observer.disconnect()
-  }, [hasMore, loading])
+    return () => {
+      if (loadingTrigger) {
+        observer.unobserve(loadingTrigger);
+      }
+    };
+  }, [hasMore, loading]);
 
   // Reset page when category changes
   useEffect(() => {
@@ -264,29 +272,61 @@ export default function BrowseWorks() {
     fetchWorks()
   }, [selectedCategory])
 
+  // Add useEffect for background elements
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const updateBackgroundElements = () => {
+      const isLargeScreen = window.innerWidth > 768;
+      const count = isLargeScreen ? 20 : 10;
+      setNumBackgroundElements(count);
+      
+      const sizes = Array(count).fill(null).map(() => ({
+        width: Math.random() * (isLargeScreen ? 300 : 150) + 50,
+        height: Math.random() * (isLargeScreen ? 300 : 150) + 50
+      }));
+      setBackgroundElementSizes(sizes);
+    };
+
+    updateBackgroundElements();
+    window.addEventListener('resize', updateBackgroundElements);
+    return () => window.removeEventListener('resize', updateBackgroundElements);
+  }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center text-red-600">
+            <p>Error: {error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-violet-900 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
-      {/* Animated background elements - reduce on mobile */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(window.innerWidth > 768 ? 20 : 10)].map((_, i) => (
+      {/* Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {[...Array(numBackgroundElements)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute bg-white/5 rounded-full"
+            className="absolute bg-gradient-to-r from-violet-200/20 to-violet-400/20 rounded-full mix-blend-multiply filter blur-xl"
+            animate={{
+              x: [Math.random() * 100, Math.random() * 100],
+              y: [Math.random() * 100, Math.random() * 100],
+            }}
             style={{
-              width: Math.random() * (window.innerWidth > 768 ? 300 : 150) + 50,
-              height: Math.random() * (window.innerWidth > 768 ? 300 : 150) + 50,
+              width: backgroundElementSizes[i]?.width || 50,
+              height: backgroundElementSizes[i]?.height || 50,
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.1, 0.2, 0.1],
-              rotate: [0, 360],
             }}
             transition={{
               duration: Math.random() * 10 + 10,
               repeat: Infinity,
-              ease: "linear"
+              repeatType: "reverse",
             }}
           />
         ))}
@@ -412,10 +452,6 @@ export default function BrowseWorks() {
         {loading ? (
           <div className="flex justify-center items-center min-h-[300px] sm:min-h-[400px]">
             <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-t-2 border-b-2 border-violet-500"></div>
-          </div>
-        ) : error ? (
-          <div className="text-center text-red-400 bg-red-400/10 rounded-lg p-3 sm:p-4 border border-red-400/20 text-sm sm:text-base">
-            {error}
           </div>
         ) : sortedAndFilteredWorks.length === 0 ? (
           <motion.div
