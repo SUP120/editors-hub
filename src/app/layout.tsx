@@ -1,19 +1,16 @@
+import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import Navbar from '@/components/Navbar'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
-  title: 'ArtistHire - Connect with Talented Artists',
-  description: 'Find and hire talented artists for your projects. A platform connecting creative professionals with clients worldwide.',
-  keywords: 'artist hiring, freelance artists, creative professionals, art commissions, digital art, illustrations',
-  openGraph: {
-    title: 'ArtistHire - Connect with Talented Artists',
-    description: 'Find and hire talented artists for your projects. A platform connecting creative professionals with clients worldwide.',
-    images: ['/og-image.jpg'],
-  },
+export const metadata: Metadata = {
+  title: 'Artist Hiring Platform',
+  description: 'Connect with talented artists for your creative projects',
+  metadataBase: new URL('https://artist-hiring-public-pxrw7248k-sup120s-projects.vercel.app'),
 }
 
 export default function RootLayout({
@@ -32,9 +29,36 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>
-        <Navbar />
-        <Toaster position="top-center" />
-        {children}
+        <ErrorBoundary>
+          <div className="min-h-screen bg-gray-50">
+            <Navbar />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 5000,
+              style: {
+                background: '#333',
+                color: '#fff',
+              },
+              success: {
+                duration: 3000,
+                theme: {
+                  primary: '#4aed88',
+                },
+              },
+              error: {
+                duration: 4000,
+                theme: {
+                  primary: '#ff4b4b',
+                },
+              },
+            }}
+          />
+        </ErrorBoundary>
       </body>
     </html>
   )

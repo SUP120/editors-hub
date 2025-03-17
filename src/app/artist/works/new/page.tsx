@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
@@ -72,6 +72,7 @@ export default function NewWork() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [currentStep, setCurrentStep] = useState(1)
+  const [numBackgroundElements, setNumBackgroundElements] = useState(8)
   const [formData, setFormData] = useState<WorkForm>({
     title: '',
     description: '',
@@ -86,6 +87,17 @@ export default function NewWork() {
     tags: [],
     software: []
   })
+
+  useEffect(() => {
+    const updateBackgroundElements = () => {
+      setNumBackgroundElements(window.innerWidth > 768 ? 15 : 8)
+    }
+
+    updateBackgroundElements()
+    window.addEventListener('resize', updateBackgroundElements)
+
+    return () => window.removeEventListener('resize', updateBackgroundElements)
+  }, [])
 
   const handleImageUpload = async (file: File, path: string) => {
     const fileExt = file.name.split('.').pop()
@@ -221,13 +233,13 @@ export default function NewWork() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-violet-900 py-6 sm:py-8 md:py-12 px-4 sm:px-6 lg:px-8">
       {/* Animated background elements - reduce on mobile */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(window.innerWidth > 768 ? 15 : 8)].map((_, i) => (
+        {[...Array(numBackgroundElements)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute bg-white/5 rounded-full"
             style={{
-              width: Math.random() * (window.innerWidth > 768 ? 300 : 150) + 50,
-              height: Math.random() * (window.innerWidth > 768 ? 300 : 150) + 50,
+              width: Math.random() * (numBackgroundElements > 8 ? 300 : 150) + 50,
+              height: Math.random() * (numBackgroundElements > 8 ? 300 : 150) + 50,
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
             }}

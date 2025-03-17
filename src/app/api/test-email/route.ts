@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 
 const resend = new Resend('re_JurY5sEo_5drSdk8gGZog7Bo3awtfoyhm')
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   try {
     // Get the email from query parameter or use a default

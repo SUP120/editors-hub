@@ -40,6 +40,8 @@ export default function Home() {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [cursorVariant, setCursorVariant] = useState('default');
+  const [numParticles, setNumParticles] = useState(20);
+  const [numFloatingElements, setNumFloatingElements] = useState(5);
   
   const testimonials = [
     {
@@ -97,6 +99,18 @@ export default function Home() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Handle window resize
+  useEffect(() => {
+    const updateElements = () => {
+      setNumParticles(window.innerWidth > 768 ? 40 : 20);
+      setNumFloatingElements(window.innerWidth > 768 ? 10 : 5);
+    };
+
+    updateElements();
+    window.addEventListener('resize', updateElements);
+    return () => window.removeEventListener('resize', updateElements);
+  }, []);
+
   const cursorVariants = {
     default: {
       x: mousePosition.x - 16,
@@ -133,7 +147,7 @@ export default function Home() {
         
         {/* Enhanced Animated Particles - Reduce on mobile */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          {[...Array(window.innerWidth > 768 ? 40 : 20)].map((_, i) => (
+          {[...Array(numParticles)].map((_, i) => (
             <motion.div
               key={i}
               className={`absolute w-${Math.random() > 0.5 ? '1' : '2'} h-${Math.random() > 0.5 ? '1' : '2'} rounded-full ${particleColors[i % particleColors.length]}`}
@@ -161,7 +175,7 @@ export default function Home() {
 
         {/* Interactive Floating Elements - Reduce on mobile */}
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(window.innerWidth > 768 ? 10 : 5)].map((_, i) => (
+          {[...Array(numFloatingElements)].map((_, i) => (
             <motion.div
               key={`float-${i}`}
               className="absolute w-8 md:w-12 h-8 md:h-12 rounded-lg bg-gradient-to-r from-emerald-500/10 to-purple-500/10 backdrop-blur-sm"
