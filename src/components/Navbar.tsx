@@ -2,19 +2,21 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { useRouter, usePathname } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
-import { FiMenu, FiX } from 'react-icons/fi'
+import { FiMenu, FiX, FiBell, FiUser, FiShoppingBag, FiLogOut, FiHome, FiInfo, FiPhone, FiPackage, FiDollarSign } from 'react-icons/fi'
 
 export default function Navbar() {
   const router = useRouter()
+  const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
   const [isArtist, setIsArtist] = useState(false)
   const [loading, setLoading] = useState(true)
   const [pendingOrders, setPendingOrders] = useState(0)
   const [hasCompletedProfile, setHasCompletedProfile] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
   useEffect(() => {
     checkUser()
@@ -40,7 +42,8 @@ export default function Navbar() {
 
   useEffect(() => {
     setMobileMenuOpen(false)
-  }, [router])
+    setProfileMenuOpen(false)
+  }, [pathname])
 
   const checkProfileCompletion = async (userId: string) => {
     try {
@@ -170,109 +173,185 @@ export default function Navbar() {
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen)
+    if (profileMenuOpen) setProfileMenuOpen(false)
+  }
+
+  const toggleProfileMenu = () => {
+    setProfileMenuOpen(!profileMenuOpen)
+  }
+
+  const isActive = (path: string) => {
+    return pathname === path
   }
 
   return (
-    <nav className="bg-gray-900/50 backdrop-blur-lg border-b border-gray-800 sticky top-0 z-50">
+    <nav className="bg-gray-900/80 backdrop-blur-xl border-b border-gray-800/50 sticky top-0 z-50 shadow-lg shadow-black/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="text-xl font-bold text-white">
-              Artist Hiring Platform
+            <Link href="/" className="flex items-center">
+              <span className="text-xl font-bold bg-gradient-to-r from-violet-400 to-indigo-500 bg-clip-text text-transparent">
+                ArtistHire
+              </span>
             </Link>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-1">
+            <Link 
+              href="/"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                isActive('/') 
+                  ? 'bg-violet-600/20 text-violet-300 border-b-2 border-violet-500' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+              }`}
+            >
+              <FiHome className="h-4 w-4" />
+              <span>Home</span>
+            </Link>
+            
+            <Link 
+              href="/browse-works"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                isActive('/browse-works') 
+                  ? 'bg-violet-600/20 text-violet-300 border-b-2 border-violet-500' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+              }`}
+            >
+              <FiPackage className="h-4 w-4" />
+              <span>Browse Works</span>
+            </Link>
+            
             <Link 
               href="/about"
-              className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                isActive('/about') 
+                  ? 'bg-violet-600/20 text-violet-300 border-b-2 border-violet-500' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+              }`}
             >
-              About
+              <FiInfo className="h-4 w-4" />
+              <span>About</span>
             </Link>
-            <Link 
-              href="/services"
-              className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
-            >
-              Services
-            </Link>
+            
             <Link 
               href="/contact"
-              className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                isActive('/contact') 
+                  ? 'bg-violet-600/20 text-violet-300 border-b-2 border-violet-500' 
+                  : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+              }`}
             >
-              Contact
+              <FiPhone className="h-4 w-4" />
+              <span>Contact</span>
             </Link>
           </div>
 
-          <div className="flex items-center space-x-4">
+          {/* User Actions */}
+          <div className="flex items-center space-x-2">
             {!loading && (
               <>
                 {user ? (
-                  <>
-                    <Link 
-                      href="/browse-works"
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
-                    >
-                      Browse Works
-                    </Link>
-
+                  <div className="flex items-center">
+                    {/* Orders Button */}
                     <Link
                       href="/orders"
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium"
+                      className={`p-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                        isActive('/orders') 
+                          ? 'bg-violet-600/20 text-violet-300' 
+                          : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                      }`}
                     >
-                      My Orders
+                      <FiShoppingBag className="h-5 w-5" />
                     </Link>
-
+                    
+                    {/* Notifications - Only for artists */}
                     {isArtist && (
-                      <>
-                        {!hasCompletedProfile && (
-                          <Link 
-                            href="/artist/complete-profile"
-                            className="text-yellow-400 hover:text-yellow-300 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800 animate-pulse"
-                          >
-                            Complete Your Artist Profile
-                          </Link>
+                      <Link 
+                        href="/artist/notifications" 
+                        className={`p-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 relative ${
+                          isActive('/artist/notifications') 
+                            ? 'bg-violet-600/20 text-violet-300' 
+                            : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <FiBell className="h-5 w-5" />
+                        {pendingOrders > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center border border-gray-900">
+                            {pendingOrders}
+                          </span>
                         )}
-                        <Link 
-                          href="/artist/profile" 
-                          className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium"
-                        >
-                          Artist Profile
-                        </Link>
-                        <Link 
-                          href="/artist/wallet" 
-                          className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium"
-                        >
-                          Wallet
-                        </Link>
-                        <Link 
-                          href="/artist/notifications" 
-                          className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium relative"
-                        >
-                          Notifications
-                          {pendingOrders > 0 && (
-                            <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                              {pendingOrders}
-                            </span>
-                          )}
-                        </Link>
-                      </>
+                      </Link>
                     )}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleSignOut}
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
-                    >
-                      Sign Out
-                    </motion.button>
-                  </>
+                    
+                    {/* Profile Menu Button */}
+                    <div className="relative ml-2">
+                      <button
+                        onClick={toggleProfileMenu}
+                        className="flex items-center justify-center h-8 w-8 rounded-full bg-violet-600/20 hover:bg-violet-600/40 transition-colors duration-200 border border-violet-500/30"
+                        aria-expanded={profileMenuOpen}
+                        aria-label="User menu"
+                      >
+                        <FiUser className="h-4 w-4 text-violet-300" />
+                      </button>
+                      
+                      {/* Profile Dropdown */}
+                      <AnimatePresence>
+                        {profileMenuOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 py-1 z-50"
+                          >
+                            {isArtist && (
+                              <>
+                                {!hasCompletedProfile && (
+                                  <Link 
+                                    href="/artist/complete-profile"
+                                    className="flex items-center gap-2 px-4 py-2 text-sm text-yellow-400 hover:bg-gray-700 w-full text-left"
+                                  >
+                                    <FiUser className="h-4 w-4" />
+                                    <span>Complete Profile</span>
+                                  </Link>
+                                )}
+                                <Link 
+                                  href="/artist/profile" 
+                                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 w-full text-left"
+                                >
+                                  <FiUser className="h-4 w-4" />
+                                  <span>Artist Profile</span>
+                                </Link>
+                                <Link 
+                                  href="/artist/wallet" 
+                                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 w-full text-left"
+                                >
+                                  <FiDollarSign className="h-4 w-4" />
+                                  <span>Wallet</span>
+                                </Link>
+                              </>
+                            )}
+                            <button
+                              onClick={handleSignOut}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 w-full text-left"
+                            >
+                              <FiLogOut className="h-4 w-4" />
+                              <span>Sign Out</span>
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
                 ) : (
-                  <>
+                  <div className="flex items-center space-x-2">
                     <Link href="/auth/signin">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="text-gray-300 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800"
+                        className="text-gray-300 hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-gray-800/50"
                       >
                         Sign In
                       </motion.button>
@@ -281,17 +360,18 @@ export default function Navbar() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="glass-button px-4 py-2 rounded-lg text-sm font-medium text-white"
+                        className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 px-4 py-1.5 rounded-lg text-sm font-medium text-white shadow-md shadow-violet-900/20 transition-all duration-200"
                       >
                         Sign Up
                       </motion.button>
                     </Link>
-                  </>
+                  </div>
                 )}
               </>
             )}
           </div>
 
+          {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <button
               onClick={toggleMobileMenu}
@@ -309,115 +389,165 @@ export default function Navbar() {
         </div>
       </div>
 
-      {mobileMenuOpen && (
-        <motion.div 
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.2 }}
-          className="md:hidden bg-gray-900/90 backdrop-blur-lg border-b border-gray-800"
-        >
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link 
-              href="/about"
-              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-            >
-              About
-            </Link>
-            <Link 
-              href="/services"
-              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Services
-            </Link>
-            <Link 
-              href="/contact"
-              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-            >
-              Contact
-            </Link>
-            
-            {!loading && user && (
-              <>
-                <Link 
-                  href="/browse-works"
-                  className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-                >
-                  Browse Works
-                </Link>
-                <Link
-                  href="/orders"
-                  className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-                >
-                  My Orders
-                </Link>
-
-                {isArtist && (
-                  <>
-                    {!hasCompletedProfile && (
-                      <Link 
-                        href="/artist/complete-profile"
-                        className="text-yellow-400 hover:text-yellow-300 block px-3 py-2 rounded-md text-base font-medium animate-pulse"
-                      >
-                        Complete Your Artist Profile
-                      </Link>
-                    )}
-                    <Link 
-                      href="/artist/profile" 
-                      className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-                    >
-                      Artist Profile
-                    </Link>
-                    <Link 
-                      href="/artist/wallet" 
-                      className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-                    >
-                      Wallet
-                    </Link>
-                    <Link 
-                      href="/artist/notifications" 
-                      className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium relative"
-                    >
-                      Notifications
-                      {pendingOrders > 0 && (
-                        <span className="absolute top-2 ml-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                          {pendingOrders}
-                        </span>
-                      )}
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
-
-            {!loading && (
-              <div className="pt-4 pb-3 border-t border-gray-700">
-                {user ? (
-                  <button
-                    onClick={handleSignOut}
-                    className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden bg-gray-900/90 backdrop-blur-lg border-b border-gray-800/50 shadow-lg shadow-black/10"
+          >
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              <Link 
+                href="/"
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/') 
+                    ? 'bg-violet-600/20 text-violet-300 border-l-4 border-violet-500 pl-2' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <FiHome className="h-5 w-5" />
+                <span>Home</span>
+              </Link>
+              
+              <Link 
+                href="/browse-works"
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/browse-works') 
+                    ? 'bg-violet-600/20 text-violet-300 border-l-4 border-violet-500 pl-2' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <FiPackage className="h-5 w-5" />
+                <span>Browse Works</span>
+              </Link>
+              
+              <Link 
+                href="/about"
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/about') 
+                    ? 'bg-violet-600/20 text-violet-300 border-l-4 border-violet-500 pl-2' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <FiInfo className="h-5 w-5" />
+                <span>About</span>
+              </Link>
+              
+              <Link 
+                href="/contact"
+                className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/contact') 
+                    ? 'bg-violet-600/20 text-violet-300 border-l-4 border-violet-500 pl-2' 
+                    : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <FiPhone className="h-5 w-5" />
+                <span>Contact</span>
+              </Link>
+              
+              {!loading && user && (
+                <>
+                  <Link
+                    href="/orders"
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium ${
+                      isActive('/orders') 
+                        ? 'bg-violet-600/20 text-violet-300 border-l-4 border-violet-500 pl-2' 
+                        : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                    }`}
                   >
-                    Sign Out
-                  </button>
-                ) : (
-                  <>
-                    <Link href="/auth/signin">
-                      <button className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
-                        Sign In
-                      </button>
-                    </Link>
-                    <Link href="/auth/signup">
-                      <button className="glass-button block px-3 py-2 rounded-md text-base font-medium text-white mt-2 w-full text-left">
-                        Sign Up
-                      </button>
-                    </Link>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </motion.div>
-      )}
+                    <FiShoppingBag className="h-5 w-5" />
+                    <span>My Orders</span>
+                  </Link>
+
+                  {isArtist && (
+                    <>
+                      {!hasCompletedProfile && (
+                        <Link 
+                          href="/artist/complete-profile"
+                          className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-yellow-400 hover:bg-gray-800/50 border-l-4 border-yellow-500 pl-2"
+                        >
+                          <FiUser className="h-5 w-5" />
+                          <span>Complete Your Profile</span>
+                        </Link>
+                      )}
+                      <Link 
+                        href="/artist/profile" 
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium ${
+                          isActive('/artist/profile') 
+                            ? 'bg-violet-600/20 text-violet-300 border-l-4 border-violet-500 pl-2' 
+                            : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <FiUser className="h-5 w-5" />
+                        <span>Artist Profile</span>
+                      </Link>
+                      <Link 
+                        href="/artist/wallet" 
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium ${
+                          isActive('/artist/wallet') 
+                            ? 'bg-violet-600/20 text-violet-300 border-l-4 border-violet-500 pl-2' 
+                            : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <FiDollarSign className="h-5 w-5" />
+                        <span>Wallet</span>
+                      </Link>
+                      <Link 
+                        href="/artist/notifications" 
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium relative ${
+                          isActive('/artist/notifications') 
+                            ? 'bg-violet-600/20 text-violet-300 border-l-4 border-violet-500 pl-2' 
+                            : 'text-gray-300 hover:text-white hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <FiBell className="h-5 w-5" />
+                        <span>Notifications</span>
+                        {pendingOrders > 0 && (
+                          <span className="ml-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {pendingOrders}
+                          </span>
+                        )}
+                      </Link>
+                    </>
+                  )}
+                </>
+              )}
+
+              {!loading && (
+                <div className="pt-4 pb-3 border-t border-gray-700">
+                  {user ? (
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800/50 w-full text-left"
+                    >
+                      <FiLogOut className="h-5 w-5" />
+                      <span>Sign Out</span>
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Link href="/auth/signin">
+                        <button className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800/50 w-full text-left">
+                          <FiUser className="h-5 w-5" />
+                          <span>Sign In</span>
+                        </button>
+                      </Link>
+                      <Link href="/auth/signup">
+                        <button className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium bg-gradient-to-r from-violet-600 to-indigo-600 text-white w-full text-left">
+                          <FiUser className="h-5 w-5" />
+                          <span>Sign Up</span>
+                        </button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   )
 } 

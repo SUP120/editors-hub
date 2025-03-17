@@ -265,16 +265,16 @@ export default function BrowseWorks() {
   }, [selectedCategory])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-violet-900 py-8 px-4 sm:px-6 lg:px-8">
-      {/* Animated background elements */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-violet-900 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
+      {/* Animated background elements - reduce on mobile */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(window.innerWidth > 768 ? 20 : 10)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute bg-white/5 rounded-full"
             style={{
-              width: Math.random() * 300 + 50,
-              height: Math.random() * 300 + 50,
+              width: Math.random() * (window.innerWidth > 768 ? 300 : 150) + 50,
+              height: Math.random() * (window.innerWidth > 768 ? 300 : 150) + 50,
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
             }}
@@ -297,33 +297,33 @@ export default function BrowseWorks() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-6 sm:mb-8 md:mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-violet-400 to-purple-400 mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-violet-400 to-purple-400 mb-2 sm:mb-4">
             Discover Amazing Works
           </h1>
-          <p className="text-blue-200 text-lg max-w-2xl mx-auto">
+          <p className="text-blue-200 text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
             Explore a curated collection of stunning works from talented artists around the world
           </p>
         </motion.div>
 
         {/* Search and Filter Section */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass-card backdrop-blur-sm rounded-xl p-6 border border-violet-500/20"
+            className="glass-card backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-violet-500/20"
           >
-            <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center">
               {/* Search Input */}
               <div className="relative flex-1 w-full">
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search works by title, description, or tags..."
+                  placeholder="Search works..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-2 sm:py-3 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                 />
               </div>
 
@@ -332,7 +332,7 @@ export default function BrowseWorks() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                 >
                   {categories.map((category) => (
                     <option key={category.value} value={category.value}>
@@ -347,7 +347,7 @@ export default function BrowseWorks() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="w-full px-4 py-3 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
                 >
                   {sortOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -362,7 +362,7 @@ export default function BrowseWorks() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex-shrink-0 px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
+                className="flex-shrink-0 px-4 sm:px-6 py-2 sm:py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200 flex items-center gap-2 text-sm sm:text-base w-full md:w-auto justify-center"
               >
                 <FiFilter />
                 <span>Filters</span>
@@ -376,20 +376,20 @@ export default function BrowseWorks() {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="mt-6 pt-6 border-t border-gray-700"
+                  className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-700"
                 >
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-blue-200 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-blue-200 mb-2">
                         Price Range
                       </label>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 sm:gap-4">
                         <input
                           type="number"
                           placeholder="Min"
                           value={priceRange.min}
                           onChange={(e) => setPriceRange({ ...priceRange, min: Number(e.target.value) })}
-                          className="w-full px-4 py-2 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                          className="w-full px-3 sm:px-4 py-2 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm sm:text-base"
                         />
                         <span className="text-gray-400">to</span>
                         <input
@@ -397,7 +397,7 @@ export default function BrowseWorks() {
                           placeholder="Max"
                           value={priceRange.max}
                           onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })}
-                          className="w-full px-4 py-2 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                          className="w-full px-3 sm:px-4 py-2 bg-gray-800/50 border border-violet-700/50 rounded-lg text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm sm:text-base"
                         />
                       </div>
                     </div>
@@ -410,33 +410,33 @@ export default function BrowseWorks() {
 
         {/* Works Grid */}
         {loading ? (
-          <div className="flex justify-center items-center min-h-[400px]">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
+          <div className="flex justify-center items-center min-h-[300px] sm:min-h-[400px]">
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-t-2 border-b-2 border-violet-500"></div>
           </div>
         ) : error ? (
-          <div className="text-center text-red-400 bg-red-400/10 rounded-lg p-4 border border-red-400/20">
+          <div className="text-center text-red-400 bg-red-400/10 rounded-lg p-3 sm:p-4 border border-red-400/20 text-sm sm:text-base">
             {error}
           </div>
         ) : sortedAndFilteredWorks.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12"
+            className="text-center py-8 sm:py-12"
           >
-            <div className="text-gray-400 text-lg">No works found matching your criteria</div>
+            <div className="text-gray-400 text-sm sm:text-lg">No works found matching your criteria</div>
             <button
               onClick={() => {
                 setSearchQuery('')
                 setSelectedCategory('all')
                 setPriceRange({ min: 0, max: 100000 })
               }}
-              className="mt-4 text-violet-400 hover:text-violet-300 transition-colors duration-200"
+              className="mt-4 text-violet-400 hover:text-violet-300 transition-colors duration-200 text-sm sm:text-base"
             >
               Clear all filters
             </button>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {sortedAndFilteredWorks.map((work, index) => (
               <motion.div
                 key={work.id}
@@ -458,57 +458,57 @@ export default function BrowseWorks() {
                       />
                     ) : (
                       <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                        <FiPackage className="w-12 h-12 text-gray-600" />
+                        <FiPackage className="w-8 h-8 sm:w-12 sm:h-12 text-gray-600" />
                       </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
 
                   {/* Work Details */}
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-white mb-2 line-clamp-2">
+                  <div className="p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold text-white mb-1 sm:mb-2 line-clamp-2">
                       {work.title}
                     </h3>
-                    <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+                    <p className="text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2">
                       {work.description}
                     </p>
 
                     {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
+                    <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4">
                       {work.tags.slice(0, 3).map((tag, i) => (
                         <span
                           key={i}
-                          className="text-xs px-2 py-1 rounded-full bg-violet-400/10 text-violet-300 border border-violet-400/20"
+                          className="text-xs px-2 py-0.5 sm:py-1 rounded-full bg-violet-400/10 text-violet-300 border border-violet-400/20"
                         >
                           {tag}
                         </span>
                       ))}
                       {work.tags.length > 3 && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-violet-400/10 text-violet-300 border border-violet-400/20">
+                        <span className="text-xs px-2 py-0.5 sm:py-1 rounded-full bg-violet-400/10 text-violet-300 border border-violet-400/20">
                           +{work.tags.length - 3}
                         </span>
                       )}
                     </div>
 
                     {/* Work Info */}
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2 text-violet-400">
-                        <FiDollarSign className="w-4 h-4" />
+                    <div className="flex items-center justify-between text-xs sm:text-sm">
+                      <div className="flex items-center gap-1 sm:gap-2 text-violet-400">
+                        <FiDollarSign className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>₹{work.price}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-blue-400">
-                        <FiClock className="w-4 h-4" />
+                      <div className="flex items-center gap-1 sm:gap-2 text-blue-400">
+                        <FiClock className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span>{work.delivery_time} days</span>
                       </div>
                     </div>
 
                     {/* Artist Info */}
-                    <div className="mt-4 pt-4 border-t border-gray-700 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-violet-400/20 flex items-center justify-center">
-                        <FiUser className="w-4 h-4 text-violet-400" />
+                    <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-700 flex items-center gap-2 sm:gap-3">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-violet-400/20 flex items-center justify-center">
+                        <FiUser className="w-3 h-3 sm:w-4 sm:h-4 text-violet-400" />
                       </div>
                       <div>
-                        <p className="text-white text-sm font-medium">
+                        <p className="text-white text-xs sm:text-sm font-medium">
                           {work.profiles.full_name || 'Anonymous Artist'}
                         </p>
                         <p className="text-gray-400 text-xs">
@@ -522,7 +522,7 @@ export default function BrowseWorks() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => router.push(`/works/${work.id}`)}
-                      className="mt-4 w-full py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200"
+                      className="mt-3 sm:mt-4 w-full py-1.5 sm:py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200 text-xs sm:text-sm"
                     >
                       View Details
                     </motion.button>
@@ -535,12 +535,12 @@ export default function BrowseWorks() {
 
         {/* Load More */}
         {hasMore && !loading && (
-          <div className="mt-8 text-center">
+          <div className="mt-6 sm:mt-8 text-center">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={loadMore}
-              className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200 text-sm sm:text-base"
             >
               Load More Works
             </motion.button>
