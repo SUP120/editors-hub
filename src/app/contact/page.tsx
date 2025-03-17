@@ -41,13 +41,13 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
-      <div className="max-w-6xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+      <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
+        <div className="text-center mb-8 sm:mb-12 md:mb-16">
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-4xl md:text-5xl font-bold text-white mb-4"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-4"
           >
             Contact Us
           </motion.h1>
@@ -55,29 +55,29 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-xl text-gray-300 max-w-3xl mx-auto"
+            className="text-base sm:text-lg md:text-xl text-gray-300 max-w-3xl mx-auto"
           >
             Have questions or feedback? We'd love to hear from you.
           </motion.p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12 md:mb-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="glass-card rounded-xl p-8 flex flex-col items-center text-center"
+            className="glass-card rounded-xl p-4 sm:p-6 md:p-8 flex flex-col items-center text-center"
           >
-            <div className="w-16 h-16 bg-violet-600/30 rounded-full flex items-center justify-center mb-6">
-              <FiMail className="w-8 h-8 text-violet-400" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-violet-600/30 rounded-full flex items-center justify-center mb-4 md:mb-6">
+              <FiMail className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-violet-400" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-4">Email Us</h3>
-            <p className="text-gray-300 mb-2">
+            <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 md:mb-4">Email Us</h3>
+            <p className="text-gray-300 mb-1 md:mb-2 text-sm sm:text-base">
               <a href="mailto:support@artisthiring.com" className="hover:text-violet-400 transition-colors">
                 support@artisthiring.com
               </a>
             </p>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-xs sm:text-sm">
               We typically respond within 24 hours
             </p>
           </motion.div>
@@ -86,18 +86,18 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="glass-card rounded-xl p-8 flex flex-col items-center text-center"
+            className="glass-card rounded-xl p-4 sm:p-6 md:p-8 flex flex-col items-center text-center"
           >
-            <div className="w-16 h-16 bg-violet-600/30 rounded-full flex items-center justify-center mb-6">
-              <FiMessageCircle className="w-8 h-8 text-violet-400" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-violet-600/30 rounded-full flex items-center justify-center mb-4 md:mb-6">
+              <FiMessageCircle className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-violet-400" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-4">Discord Community</h3>
-            <p className="text-gray-300 mb-2">
+            <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 md:mb-4">Discord Community</h3>
+            <p className="text-gray-300 mb-1 md:mb-2 text-sm sm:text-base">
               <a href="https://discord.com/invite/YWFD72HV" target="_blank" rel="noopener noreferrer" className="hover:text-violet-400 transition-colors">
                 Join our Discord
               </a>
             </p>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-xs sm:text-sm">
               Connect with our community and support team
             </p>
           </motion.div>
@@ -106,16 +106,14 @@ export default function ContactPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="glass-card rounded-xl p-8 flex flex-col items-center text-center"
+            className="glass-card rounded-xl p-4 sm:p-6 md:p-8 flex flex-col items-center text-center sm:col-span-2 md:col-span-1"
           >
-            <div className="w-16 h-16 bg-violet-600/30 rounded-full flex items-center justify-center mb-6">
-              <FiMapPin className="w-8 h-8 text-violet-400" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-violet-600/30 rounded-full flex items-center justify-center mb-4 md:mb-6">
+              <FiMapPin className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-violet-400" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-4">Our Location</h3>
-            <p className="text-gray-300">
-              India <br />
-              Ranchi, Jharkhand<br />
-              India
+            <h3 className="text-lg sm:text-xl font-semibold text-white mb-2 md:mb-4">Our Location</h3>
+            <p className="text-gray-300 text-sm sm:text-base">
+              Ranchi, Jharkhand, India
             </p>
           </motion.div>
         </div>
@@ -124,14 +122,14 @@ export default function ContactPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="glass-card rounded-xl p-8"
+          className="glass-card rounded-xl p-4 sm:p-6 md:p-8"
         >
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">Send Us a Message</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 md:mb-6 text-center">Send Us a Message</h2>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                   Your Name
                 </label>
                 <input
@@ -141,13 +139,13 @@ export default function ContactPage() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-white"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-white text-sm sm:text-base"
                   placeholder="John Doe"
                 />
               </div>
               
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                   Your Email
                 </label>
                 <input
@@ -157,14 +155,14 @@ export default function ContactPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-white"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-white text-sm sm:text-base"
                   placeholder="john@example.com"
                 />
               </div>
             </div>
             
             <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="subject" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                 Subject
               </label>
               <input
@@ -174,13 +172,13 @@ export default function ContactPage() {
                 value={formData.subject}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-white"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-white text-sm sm:text-base"
                 placeholder="How can we help you?"
               />
             </div>
             
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="message" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1 sm:mb-2">
                 Message
               </label>
               <textarea
@@ -189,32 +187,32 @@ export default function ContactPage() {
                 value={formData.message}
                 onChange={handleChange}
                 required
-                rows={6}
-                className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-white"
+                rows={5}
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-white text-sm sm:text-base"
                 placeholder="Tell us more about your inquiry..."
               ></textarea>
             </div>
             
-            <div className="text-center">
+            <div className="text-center pt-2">
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-8 py-3 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-colors flex items-center justify-center space-x-2 mx-auto disabled:opacity-70 disabled:cursor-not-allowed"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 rounded-lg text-white font-medium hover:from-violet-700 hover:to-purple-700 transition-all inline-flex items-center justify-center"
               >
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>Sending...</span>
+                    Sending...
                   </>
                 ) : (
                   <>
-                    <FiSend className="w-5 h-5" />
-                    <span>Send Message</span>
+                    Send Message
+                    <FiSend className="ml-2" />
                   </>
                 )}
               </motion.button>
@@ -222,8 +220,8 @@ export default function ContactPage() {
           </form>
         </motion.div>
 
-        <div className="mt-16 text-center text-gray-400 text-sm">
-          <p>
+        <div className="mt-8 sm:mt-12 md:mt-16 text-center">
+          <p className="text-gray-400 text-xs sm:text-sm">
             By contacting us, you agree to our <a href="/privacy-policy" className="text-violet-400 hover:underline">Privacy Policy</a> and <a href="/terms-of-service" className="text-violet-400 hover:underline">Terms of Service</a>.
           </p>
         </div>

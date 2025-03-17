@@ -99,13 +99,13 @@ export default function ServicesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
-      <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12 md:py-16 sm:px-6 lg:px-8">
+        <div className="text-center mb-8 sm:mb-12 md:mb-16">
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-4xl md:text-5xl font-bold text-white mb-4"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-4"
           >
             Our Platform Services
           </motion.h1>
@@ -113,14 +113,14 @@ export default function ServicesPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-xl text-gray-300 max-w-3xl mx-auto"
+            className="text-base sm:text-lg md:text-xl text-gray-300 max-w-3xl mx-auto px-2"
           >
             Connecting creative talent with clients worldwide with transparent fees and artist freedom
           </motion.p>
         </div>
 
         {/* Platform Features Section */}
-        <div className="grid md:grid-cols-2 gap-8 mb-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12 sm:mb-16 md:mb-24">
           {platformFeatures.map((feature, index) => (
             <motion.div
               key={index}
@@ -128,20 +128,20 @@ export default function ServicesPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="glass-card rounded-xl p-8"
+              className="glass-card rounded-xl p-4 sm:p-6 md:p-8"
             >
-              <div className="flex items-center mb-6">
-                <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-lg p-3 mr-4">
+              <div className="flex items-center mb-4 md:mb-6">
+                <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-lg p-2 md:p-3 mr-3 md:mr-4">
                   {feature.icon}
                 </div>
-                <h2 className="text-2xl font-bold text-white">{feature.title}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">{feature.title}</h2>
               </div>
-              <p className="text-gray-300 mb-6">{feature.description}</p>
-              <ul className="space-y-3">
+              <p className="text-sm sm:text-base text-gray-300 mb-4 md:mb-6">{feature.description}</p>
+              <ul className="space-y-2 md:space-y-3">
                 {feature.benefits.map((benefit, benefitIndex) => (
                   <li key={benefitIndex} className="flex items-start">
-                    <FiCheck className="w-5 h-5 text-emerald-400 mr-2 mt-0.5" />
-                    <span className="text-gray-300">{benefit}</span>
+                    <FiCheck className="w-4 h-4 md:w-5 md:h-5 text-emerald-400 mr-2 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm sm:text-base text-gray-300">{benefit}</span>
                   </li>
                 ))}
               </ul>
@@ -155,57 +155,52 @@ export default function ServicesPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mb-24"
+          className="mb-12 sm:mb-16 md:mb-24"
         >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Transparent Platform Fees</h2>
-            <p className="text-gray-300 max-w-3xl mx-auto">
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 md:mb-4">Transparent Platform Fees</h2>
+            <p className="text-sm sm:text-base text-gray-300 max-w-3xl mx-auto px-2">
               We believe in fair compensation for artists. Our platform only charges fees when you successfully complete a project.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {platformFees.map((plan, index) => (
               <motion.div
                 key={index}
                 whileHover={{ translateY: -8 }}
-                className={`glass-card rounded-xl p-8 relative ${plan.popular ? 'border-2 border-violet-500' : ''}`}
+                className={`glass-card rounded-xl p-4 sm:p-6 md:p-8 relative ${plan.popular ? 'border-2 border-violet-500' : ''}`}
               >
                 {plan.popular && (
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-violet-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-violet-500 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
                     Most Popular
                   </div>
                 )}
-                <h3 className="text-xl font-bold text-white mb-2">{plan.title}</h3>
-                <p className="text-gray-400 mb-4">{plan.description}</p>
-                <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 mb-2">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">{plan.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-400 mb-3 md:mb-4">{plan.description}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400 mb-2">
                   {plan.fee}
                 </p>
                 {plan.requirements && (
-                  <p className="text-sm text-gray-400 mb-6">
+                  <p className="text-xs sm:text-sm text-gray-400 mb-4 md:mb-6">
                     Requirements: {plan.requirements}
                   </p>
                 )}
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start">
-                      <FiCheck className="w-5 h-5 text-emerald-400 mr-2 mt-0.5" />
-                      <span className="text-gray-300">{feature}</span>
+                      <FiCheck className="w-4 h-4 md:w-5 md:h-5 text-emerald-400 mr-2 mt-0.5 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm md:text-base text-gray-300">{feature}</span>
                     </li>
                   ))}
                 </ul>
-                <Link href="/auth/signup">
+                <Link href="/auth/signup" className="block">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 ${
-                      plan.popular 
-                        ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white' 
-                        : 'bg-white/10 text-white hover:bg-white/20'
-                    }`}
+                    className="w-full py-2 md:py-3 px-4 md:px-6 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg text-white text-sm sm:text-base font-medium hover:from-purple-600 hover:to-indigo-600 transition-all"
                   >
                     Get Started
-                    <FiArrowRight className="w-4 h-4" />
                   </motion.button>
                 </Link>
               </motion.div>
@@ -219,102 +214,76 @@ export default function ServicesPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mb-24"
+          className="mb-12 sm:mb-16 md:mb-24"
         >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Artist Freedom</h2>
-            <p className="text-gray-300 max-w-3xl mx-auto">
-              We believe in empowering artists with the freedom to work on their own terms
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 md:mb-4">Artist Freedom</h2>
+            <p className="text-sm sm:text-base text-gray-300 max-w-3xl mx-auto px-2">
+              We believe in empowering artists with the freedom to work on their own terms.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
             {artistFreedom.map((item, index) => (
               <motion.div
                 key={index}
-                whileHover={{ translateY: -8 }}
-                className="glass-card rounded-xl p-8 text-center"
+                whileHover={{ scale: 1.03 }}
+                className="glass-card rounded-xl p-4 sm:p-6 md:p-8 text-center"
               >
-                <div className="flex justify-center mb-6">
-                  {item.icon}
+                <div className="flex justify-center mb-4 md:mb-6">
+                  <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-full p-3 md:p-4">
+                    {item.icon}
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-4">{item.title}</h3>
-                <p className="text-gray-300">{item.description}</p>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2 md:mb-3">{item.title}</h3>
+                <p className="text-xs sm:text-sm md:text-base text-gray-300">{item.description}</p>
               </motion.div>
             ))}
           </div>
         </motion.div>
 
-        {/* Categories Section */}
+        {/* Creative Categories Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mb-24"
         >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Creative Categories</h2>
-            <p className="text-gray-300 max-w-3xl mx-auto">
-              Our platform supports a wide range of creative services across various disciplines
+          <div className="text-center mb-8 md:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 md:mb-4">Creative Categories</h2>
+            <p className="text-sm sm:text-base text-gray-300 max-w-3xl mx-auto px-2">
+              Our platform supports a wide range of creative disciplines to meet all your project needs.
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              "Digital Illustration", 
-              "Graphic Design", 
-              "Animation", 
-              "Video Editing",
-              "Web Design", 
-              "UI/UX Design", 
-              "3D Modeling", 
-              "Logo Design",
-              "Brand Identity", 
-              "Social Media Graphics", 
-              "Character Design", 
-              "Concept Art"
-            ].map((category, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.05 }}
-                className="glass-card rounded-xl p-4 text-center"
-              >
-                <p className="text-white font-medium">{category}</p>
-              </motion.div>
-            ))}
+          <div className="glass-card rounded-xl p-4 sm:p-6 md:p-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
+              {[
+                "Digital Illustration", "Animation", "Video Editing", 
+                "Graphic Design", "UI/UX Design", "3D Modeling",
+                "Logo Design", "Web Design", "Photo Editing",
+                "Music Production", "Voice Over", "Content Writing"
+              ].map((category, index) => (
+                <motion.div
+                  key={index}
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 rounded-lg p-3 md:p-4 text-center"
+                >
+                  <span className="text-sm md:text-base text-white">{category}</span>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="glass-card rounded-xl p-8 mt-24 text-center"
-        >
-          <h2 className="text-2xl font-bold text-white mb-4">Ready to Join Our Creative Community?</h2>
-          <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-            Whether you're an artist looking to showcase your talent or a client seeking creative services,
-            our platform provides the tools and support you need to succeed.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          
+          <div className="text-center mt-12 md:mt-16">
             <Link href="/auth/signup">
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-purple-500 rounded-lg text-white font-medium hover:from-emerald-600 hover:to-purple-600 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl text-white font-medium hover:from-purple-600 hover:to-indigo-600 transition-all inline-flex items-center"
               >
-                Sign Up Now
-              </motion.button>
-            </Link>
-            <Link href="/contact">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-3 bg-white/10 rounded-lg text-white font-medium hover:bg-white/20 transition-colors"
-              >
-                Contact Us
+                Join Our Creative Community
+                <FiArrowRight className="ml-2" />
               </motion.button>
             </Link>
           </div>

@@ -113,9 +113,9 @@ export default function Home() {
 
   return (
     <div className="relative">
-      {/* Custom Cursor */}
+      {/* Custom Cursor - Hide on mobile */}
       <motion.div
-        className="fixed top-0 left-0 w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-purple-500 mix-blend-screen pointer-events-none z-50"
+        className="fixed top-0 left-0 w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-purple-500 mix-blend-screen pointer-events-none z-50 hidden md:block"
         variants={cursorVariants}
         animate={cursorVariant}
       />
@@ -131,9 +131,9 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,219,198,0.3),rgba(255,255,255,0))]"></div>
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
         
-        {/* Enhanced Animated Particles */}
+        {/* Enhanced Animated Particles - Reduce on mobile */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          {[...Array(40)].map((_, i) => (
+          {[...Array(window.innerWidth > 768 ? 40 : 20)].map((_, i) => (
             <motion.div
               key={i}
               className={`absolute w-${Math.random() > 0.5 ? '1' : '2'} h-${Math.random() > 0.5 ? '1' : '2'} rounded-full ${particleColors[i % particleColors.length]}`}
@@ -159,12 +159,12 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Interactive Floating Elements */}
+        {/* Interactive Floating Elements - Reduce on mobile */}
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(10)].map((_, i) => (
+          {[...Array(window.innerWidth > 768 ? 10 : 5)].map((_, i) => (
             <motion.div
               key={`float-${i}`}
-              className="absolute w-12 h-12 rounded-lg bg-gradient-to-r from-emerald-500/10 to-purple-500/10 backdrop-blur-sm"
+              className="absolute w-8 md:w-12 h-8 md:h-12 rounded-lg bg-gradient-to-r from-emerald-500/10 to-purple-500/10 backdrop-blur-sm"
               initial={{
                 x: Math.random() * 100 + "%",
                 y: Math.random() * 100 + "%",
@@ -191,24 +191,24 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 md:pt-32 pb-16 md:pb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
             <motion.div
               initial="hidden"
               animate="visible"
               variants={staggerContainer}
-              className="space-y-8"
+              className="space-y-6 md:space-y-8"
             >
               <motion.div variants={fadeIn} className="inline-block">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-emerald-500/10 to-purple-500/10 text-emerald-300 border border-emerald-500/20">
-                  <HiOutlineSparkles className="mr-1 h-4 w-4" />
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs md:text-sm font-medium bg-gradient-to-r from-emerald-500/10 to-purple-500/10 text-emerald-300 border border-emerald-500/20">
+                  <HiOutlineSparkles className="mr-1 h-3 md:h-4 w-3 md:w-4" />
                   The Next-Gen Creative Marketplace
                 </span>
               </motion.div>
               
               <motion.h1 
                 variants={fadeIn}
-                className="text-5xl md:text-7xl font-bold leading-tight"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold leading-tight"
               >
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-purple-400 to-pink-400">
                   Unleash
@@ -219,7 +219,7 @@ export default function Home() {
               
               <motion.p 
                 variants={fadeIn}
-                className="text-xl text-gray-300 leading-relaxed"
+                className="text-base md:text-xl text-gray-300 leading-relaxed"
               >
                 Connect with elite creative professionals who transform your vision into reality. From stunning visuals to captivating content, find your perfect creative partner.
               </motion.p>
@@ -228,25 +228,25 @@ export default function Home() {
                 variants={fadeIn}
                 className="flex flex-col sm:flex-row gap-4"
               >
-                <Link href="/auth/signup">
+                <Link href="/auth/signup" className="w-full sm:w-auto">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="group px-6 py-3 bg-gradient-to-r from-emerald-500 to-purple-500 rounded-xl text-white font-medium
-                             hover:from-emerald-600 hover:to-purple-600 transform hover:-translate-y-0.5 transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+                    className="group px-4 md:px-6 py-3 bg-gradient-to-r from-emerald-500 to-purple-500 rounded-xl text-white font-medium
+                             hover:from-emerald-600 hover:to-purple-600 transform hover:-translate-y-0.5 transition-all flex items-center gap-2 w-full justify-center"
                   >
                     Get Started Now
                     <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
                   </motion.button>
                 </Link>
-                <Link href="https://discord.gg/YWFD72HV" target="_blank">
+                <Link href="https://discord.gg/YWFD72HV" target="_blank" className="w-full sm:w-auto">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="px-6 py-3 rounded-xl text-gray-300 font-medium backdrop-blur-sm
-                             bg-white/5 border border-white/10 hover:bg-white/10 transition-colors w-full sm:w-auto justify-center flex items-center gap-2"
+                    className="px-4 md:px-6 py-3 rounded-xl text-gray-300 font-medium backdrop-blur-sm
+                             bg-white/5 border border-white/10 hover:bg-white/10 transition-colors w-full justify-center flex items-center gap-2"
                   >
-                    <FaDiscord className="w-5 h-5 text-purple-400" />
+                    <FaDiscord className="w-4 md:w-5 h-4 md:h-5 text-purple-400" />
                     Join Our Community
                   </motion.button>
                 </Link>
@@ -257,23 +257,23 @@ export default function Home() {
                 variants={fadeIn}
                 className="flex flex-col sm:flex-row gap-4 mt-4"
               >
-                <Link href="/auth/signin">
+                <Link href="/auth/signin" className="w-full sm:w-auto">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="group px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl text-white font-medium
-                             hover:from-cyan-600 hover:to-blue-600 transform hover:-translate-y-0.5 transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+                    className="group px-4 md:px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl text-white font-medium
+                             hover:from-cyan-600 hover:to-blue-600 transform hover:-translate-y-0.5 transition-all flex items-center gap-2 w-full justify-center"
                   >
                     Sign In
                     <HiCursorClick className="group-hover:rotate-12 transition-transform" />
                   </motion.button>
                 </Link>
-                <Link href="/browse-works">
+                <Link href="/browse-works" className="w-full sm:w-auto">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="px-6 py-3 rounded-xl text-gray-300 font-medium backdrop-blur-sm
-                             bg-white/5 border border-white/10 hover:bg-white/10 transition-colors w-full sm:w-auto justify-center flex"
+                    className="px-4 md:px-6 py-3 rounded-xl text-gray-300 font-medium backdrop-blur-sm
+                             bg-white/5 border border-white/10 hover:bg-white/10 transition-colors w-full justify-center flex"
                   >
                     Browse Works
                   </motion.button>
@@ -282,11 +282,11 @@ export default function Home() {
               
               <motion.div 
                 variants={fadeIn}
-                className="flex items-center gap-4 text-sm text-gray-400"
+                className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-400"
               >
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-[#0B1120] overflow-hidden">
+                    <div key={i} className="w-6 md:w-8 h-6 md:h-8 rounded-full border-2 border-[#0B1120] overflow-hidden">
                       <Image 
                         src={`https://randomuser.me/api/portraits/${i % 2 === 0 ? 'women' : 'men'}/${20 + i}.jpg`} 
                         alt="User" 
