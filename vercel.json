@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "redirects": [
+    {
+      "source": "/payment/callback",
+      "destination": "/api/payment/callback",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://www.editorshub.in"
+        }
+      ]
+    }
+  ]
+} 
