@@ -13,6 +13,11 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log('Payment initiation request received:', {
+      orderId,
+      timestamp: new Date().toISOString()
+    });
+
     // Fetch order details with client and work information
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -77,30 +82,55 @@ export async function POST(request: Request) {
     console.log('Order updated successfully:', updatedOrder);
 
     // Initialize payment with Cashfree
-    const paymentResponse = await initializePayment({
-      orderId: order.id,
-      orderAmount: totalAmount,
-      customerDetails: {
-        customerId: order.client.id,
-        customerName: order.client.full_name,
-        customerEmail: order.client.email,
-        customerPhone: order.client.phone || '9999999999'
+    try {
+      const paymentResponse = await initializePayment({
+        orderId: order.id,
+        orderAmount: totalAmount,
+        customerDetails: {
+          customerId: order.client.id,
+          customerName: order.client.full_name,
+          customerEmail: order.client.email,
+          customerPhone: order.client.phone || '9999999999'
+        }
+      });
+
+      // Update order with payment session ID
+      const { error: sessionError } = await supabaseAdmin
+        .from('orders')
+        .update({
+          payment_session_id: paymentResponse.paymentSessionId
+        })
+        .eq('id', orderId);
+
+      if (sessionError) {
+        console.error('Error updating order with payment session:', sessionError);
       }
-    });
 
-    // Update order with payment session ID
-    const { error: sessionError } = await supabaseAdmin
-      .from('orders')
-      .update({
-        payment_session_id: paymentResponse.paymentSessionId
-      })
-      .eq('id', orderId);
+      console.log('Payment initialized successfully:', {
+        orderId,
+        sessionId: paymentResponse.paymentSessionId,
+        hasPaymentLink: !!paymentResponse.paymentLink
+      });
 
-    if (sessionError) {
-      console.error('Error updating order with payment session:', sessionError);
+      return NextResponse.json(paymentResponse);
+    } catch (paymentError: any) {
+      console.error('Payment initialization error:', {
+        message: paymentError.message,
+        orderId,
+        timestamp: new Date().toISOString()
+      });
+
+      // Update order status to reflect failure
+      await supabaseAdmin
+        .from('orders')
+        .update({
+          payment_status: 'failed',
+          status: 'payment_failed'
+        })
+        .eq('id', orderId);
+
+      throw paymentError;
     }
-
-    return NextResponse.json(paymentResponse);
   } catch (error: any) {
     console.error('Payment initiation error:', error);
     return NextResponse.json(

@@ -4,10 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 // Cashfree API credentials from environment variables
 const APP_ID = process.env.NEXT_PUBLIC_CASHFREE_APP_ID;
 const SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
-
-// API URLs - Always use production URL since we have production credentials
-const CASHFREE_BASE_URL = 'https://api.cashfree.com/pg';
 const API_VERSION = '2022-09-01';
+const CASHFREE_BASE_URL = 'https://api.cashfree.com/pg';
 
 // Validate required environment variables
 if (!APP_ID || !SECRET_KEY) {
@@ -64,25 +62,31 @@ type CashfreePaymentConfig = {
   };
 };
 
-// Get base URL based on environment
+// Add these validation functions
+const validateConfig = () => {
+  const missingVars = [];
+  if (!APP_ID) missingVars.push('NEXT_PUBLIC_CASHFREE_APP_ID');
+  if (!SECRET_KEY) missingVars.push('CASHFREE_SECRET_KEY');
+  
+  if (missingVars.length > 0) {
+    throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+  }
+};
+
 const getBaseUrl = () => {
-  // For local development
-  if (process.env.NODE_ENV === 'development') {
-    return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+  const url = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+  if (!url) {
+    throw new Error('Missing APP_URL configuration');
   }
-  
-  // For production Vercel deployment
-  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
-    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
-  }
-  
-  // Fallback to configured app URL
-  return process.env.NEXT_PUBLIC_APP_URL || 'https://www.editorshub.in';
+  return url.replace(/\/$/, ''); // Remove trailing slash if present
 };
 
 // Initialize a payment with Cashfree
 export const initializePayment = async (config: CashfreePaymentConfig) => {
   try {
+    // Validate configuration
+    validateConfig();
+    
     // Log initialization details
     console.log('Initializing Cashfree payment:', {
       orderId: config.orderId,
@@ -119,13 +123,12 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
       order_expiry_time: expiryTime.toISOString()
     };
 
+    // Log request details for debugging
     console.log('Cashfree API request:', {
       url: `${CASHFREE_BASE_URL}/orders`,
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-client-id': ensureAppId(),
-        'x-client-secret': ensureSecretKey(),
+        'x-client-id': APP_ID,
         'x-api-version': API_VERSION
       }
     });
@@ -135,12 +138,12 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
       `${CASHFREE_BASE_URL}/orders`,
       {
         method: 'POST',
-        headers: new Headers({
+        headers: {
           'Content-Type': 'application/json',
-          'x-client-id': ensureAppId(),
-          'x-client-secret': ensureSecretKey(),
+          'x-client-id': APP_ID || '',
+          'x-client-secret': SECRET_KEY || '',
           'x-api-version': API_VERSION
-        }),
+        },
         body: JSON.stringify(cashfreePayload)
       }
     );
@@ -164,7 +167,8 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
 
     return {
       orderId: cashfreeData.order_id,
-      paymentSessionId: cashfreeData.payment_session_id
+      paymentSessionId: cashfreeData.payment_session_id,
+      paymentLink: cashfreeData.payment_link
     };
 
   } catch (error: any) {
