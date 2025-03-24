@@ -72,7 +72,10 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
     console.log('Initializing Cashfree payment:', {
       orderId: config.orderId,
       amount: config.orderAmount,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      hasAppId: !!APP_ID,
+      hasSecretKey: !!SECRET_KEY
     });
 
     // Calculate expiry time (30 minutes from now)
@@ -101,7 +104,16 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
       order_expiry_time: expiryTime.toISOString()
     };
 
-    console.log('Cashfree payload:', cashfreePayload);
+    console.log('Cashfree API request:', {
+      url: `${CASHFREE_BASE_URL}/orders`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-client-id': APP_ID,
+        'x-client-secret': SECRET_KEY ? '***' : undefined,
+        'x-api-version': API_VERSION
+      }
+    });
 
     // Make API request to Cashfree
     const response = await fetch(
@@ -121,8 +133,13 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
     const cashfreeData = await response.json();
 
     if (!response.ok) {
-      console.error('Cashfree API error:', cashfreeData);
-      throw new Error(cashfreeData.message || 'Failed to create payment order');
+      console.error('Cashfree API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: cashfreeData,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+      throw new Error(cashfreeData.message || `Failed to create payment order: ${response.status} ${response.statusText}`);
     }
 
     console.log('Cashfree order created successfully:', {
@@ -136,7 +153,12 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
     };
 
   } catch (error: any) {
-    console.error('Error in initializePayment:', error);
+    console.error('Error in initializePayment:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response,
+      status: error.status
+    });
     throw new Error(`Payment initialization failed: ${error.message}`);
   }
 };

@@ -217,14 +217,14 @@ export default function ArtistProfile() {
           </motion.div>
 
           {/* Profile Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
             className="text-center md:text-left flex-1"
           >
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-violet-400 to-purple-400 mb-1 sm:mb-2">
               {profile?.full_name || 'Artist'}
-            </h1>
+              </h1>
             <p className="text-blue-200 text-sm sm:text-base mb-2 sm:mb-3">
               {profile?.bio || 'No bio available'}
             </p>
@@ -234,7 +234,7 @@ export default function ArtistProfile() {
               <div className="glass-card px-3 sm:px-4 py-1 sm:py-2 rounded-full border border-violet-500/20 flex items-center gap-1 sm:gap-2">
                 <FiPackage className="w-3 h-3 sm:w-4 sm:h-4 text-violet-400" />
                 <span className="text-white text-xs sm:text-sm">{works.length} Works</span>
-              </div>
+                    </div>
               <div className="glass-card px-3 sm:px-4 py-1 sm:py-2 rounded-full border border-violet-500/20 flex items-center gap-1 sm:gap-2">
                 <FiStar className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
                 <span className="text-white text-xs sm:text-sm">{artistProfile?.rating || '0'} Rating</span>
@@ -290,7 +290,7 @@ export default function ArtistProfile() {
               )}
             </div>
           </motion.div>
-        </div>
+              </div>
 
         {/* Tabs */}
         <div className="mb-6 sm:mb-8">
@@ -309,13 +309,13 @@ export default function ArtistProfile() {
               </button>
             ))}
           </div>
-        </div>
+            </div>
 
         {/* Tab Content */}
         <div>
           {/* Works Tab */}
           {activeTab === 'works' && (
-            <motion.div
+                <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="space-y-6 sm:space-y-8"
@@ -355,23 +355,23 @@ export default function ArtistProfile() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {works.map((work, index) => (
-                      <motion.div
-                        key={work.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
+                  {works.map((work, index) => (
+                    <motion.div
+                      key={work.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
                         whileHover={{ y: -5 }}
-                        className="group relative"
-                      >
+                      className="group relative"
+                    >
                         <div className="glass-card overflow-hidden rounded-xl border border-violet-500/20 transition-all duration-300 group-hover:border-violet-500/40 group-hover:shadow-lg group-hover:shadow-violet-500/10">
                           {/* Work Image */}
                           <div className="relative aspect-video overflow-hidden">
                             {work.images && work.images[0] ? (
-                              <Image
-                                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${work.images[0]}`}
-                                alt={work.title}
-                                fill
+                            <Image
+                              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/works/${work.images[0]}`}
+                              alt={work.title}
+                              fill
                                 className="object-cover transition-transform duration-300 group-hover:scale-110"
                               />
                             ) : (
@@ -432,23 +432,23 @@ export default function ArtistProfile() {
                               </motion.button>
                               {user?.id === profile?.id && (
                                 <div className="flex items-center gap-1 sm:gap-2">
-                                  <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
                                     onClick={() => router.push(`/artist/works/edit/${work.id}`)}
                                     className="p-1 sm:p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
-                                  >
+                                >
                                     <FiEdit className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  </motion.button>
-                                  <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => handleDeleteWork(work.id)}
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleDeleteWork(work.id)}
                                     className="p-1 sm:p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200"
                                   >
                                     <FiTrash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                                  </motion.button>
-                                </div>
+                                </motion.button>
+                              </div>
                               )}
                             </div>
                           </div>
@@ -456,8 +456,8 @@ export default function ArtistProfile() {
                       </motion.div>
                     ))}
                   </div>
-                )}
-              </div>
+                            )}
+                          </div>
             </motion.div>
           )}
 
@@ -484,8 +484,8 @@ export default function ArtistProfile() {
                           className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-violet-400/10 text-violet-300 border border-violet-400/20"
                         >
                           {skill}
-                        </span>
-                      ))}
+                              </span>
+                            ))}
                     </div>
                   </div>
                 )}
@@ -559,13 +559,13 @@ export default function ArtistProfile() {
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                  ))}
+                </div>
                 )}
               </div>
-            </motion.div>
-          )}
-        </div>
+                </motion.div>
+              )}
+          </div>
       </div>
     </div>
   )
