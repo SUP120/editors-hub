@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
 // Cashfree API credentials from environment variables
-const APP_ID = process.env.NEXT_PUBLIC_CASHFREE_APP_ID;
+const APP_ID = process.env.CASHFREE_APP_ID;
 const SECRET_KEY = process.env.CASHFREE_SECRET_KEY;
 const API_VERSION = '2022-09-01';
 const CASHFREE_BASE_URL = 'https://api.cashfree.com/pg';
@@ -65,7 +65,7 @@ type CashfreePaymentConfig = {
 // Add these validation functions
 const validateConfig = () => {
   const missingVars = [];
-  if (!APP_ID) missingVars.push('NEXT_PUBLIC_CASHFREE_APP_ID');
+  if (!APP_ID) missingVars.push('CASHFREE_APP_ID');
   if (!SECRET_KEY) missingVars.push('CASHFREE_SECRET_KEY');
   
   if (missingVars.length > 0) {
