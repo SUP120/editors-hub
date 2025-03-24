@@ -118,6 +118,10 @@ export default function ArtistProfile() {
   }
 
   const handleAddWork = () => {
+    if (!profile?.is_artist) {
+      toast.error('Only artists can add works')
+      return
+    }
     router.push('/artist/works/new')
   }
 
@@ -328,7 +332,7 @@ export default function ArtistProfile() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => router.push('/artist/add-work')}
+                      onClick={handleAddWork}
                       className="px-3 sm:px-4 py-1.5 sm:py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200 text-xs sm:text-sm flex items-center gap-1 sm:gap-2"
                     >
                       <FiPlus className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -345,7 +349,7 @@ export default function ArtistProfile() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => router.push('/artist/add-work')}
+                        onClick={handleAddWork}
                         className="px-3 sm:px-4 py-1.5 sm:py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors duration-200 text-xs sm:text-sm inline-flex items-center gap-1 sm:gap-2"
                       >
                         <FiPlus className="w-3 h-3 sm:w-4 sm:h-4" />

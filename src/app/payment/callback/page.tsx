@@ -18,6 +18,7 @@ export default function PaymentCallback() {
       try {
         // Get orderId from searchParams
         const orderId = searchParams.get('orderId')
+        const txStatus = searchParams.get('txStatus')
         
         if (!orderId) {
           throw new Error('Order ID not found in callback parameters')
@@ -32,109 +33,53 @@ export default function PaymentCallback() {
           params[key] = value
         })
         
-        console.log('Payment callback parameters received:', {
-          orderId,
-          paramKeys: Object.keys(params),
-          timestamp: new Date().toISOString()
+        // Send to our callback API
+        const response = await fetch('/api/payment/callback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(params)
         })
-        
-        // Check if this is coming directly from Cashfree with a txStatus parameter
-        const isCashfreeCallback = params.txStatus !== undefined
-        
-        // For Cashfree direct callbacks, prepare data with Cashfree parameters
-        // For our own redirect, we'll make a call to verify the payment status
-        let callbackData
-        
-        if (isCashfreeCallback) {
-          callbackData = {
-            orderId: params.orderId || orderId,
-            orderAmount: params.orderAmount || '0',
-            referenceId: params.referenceId || '',
-            txStatus: params.txStatus || 'PENDING',
-            paymentMode: params.paymentMode || '',
-            txMsg: params.txMsg || '',
-            txTime: params.txTime || new Date().toISOString(),
-            signature: params.signature || ''
-          }
-        } else {
-          // This is a regular redirect without Cashfree parameters
-          // We'll need to check the payment status on the server
-          callbackData = {
-            orderId: orderId,
-            checkPaymentStatus: true
-          }
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Payment verification failed')
         }
 
-        // Send to our callback API
-        try {
-          const response = await fetch('/api/payment/callback', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(callbackData)
-          })
-
-          const data = await response.json()
-
-          if (!response.ok) {
-            // Handle special case for order not found - still show success for demo
-            if (response.status === 404 || (data.error && data.error.includes('not found'))) {
-              console.log('Order not found, but showing success for demo purposes')
-              setStatus('success')
-              setMessage('Payment was processed successfully! Redirecting to orders page...')
-              toast.success('Payment processed successfully!')
-              
-              // Redirect to orders page after 3 seconds
-              setTimeout(() => {
-                router.push('/orders')
-              }, 3000)
-              return
-            }
-            
-            throw new Error(data.error || 'Payment verification failed')
-          }
+        // Handle different payment statuses
+        if (txStatus === 'SUCCESS' || data.status === 'completed') {
+          setStatus('success')
+          setMessage('Payment successful! Redirecting to your order...')
+          toast.success('Payment successful!')
           
-          // Even if already processed, show success
-          if (data.alreadyProcessed) {
-            console.log('Payment was already processed:', data)
-            setStatus('success')
-            setMessage('Payment was already completed! Redirecting to your order...')
-          } else if (data.status === 'failed' || data.status === 'cancelled') {
-            setStatus('error')
-            setMessage(`Payment ${data.status}: ${data.message || 'The payment could not be processed.'}`)
-            toast.error(`Payment ${data.status}`)
-          } else {
-            setStatus('success')
-            setMessage('Payment successful! Redirecting to your order...')
-          }
+          // Redirect to order page after 2 seconds
+          setTimeout(() => {
+            router.push(`/orders/${orderId}`)
+          }, 2000)
+        } else if (txStatus === 'FAILED' || data.status === 'failed') {
+          setStatus('error')
+          setMessage('Payment failed. Please try again.')
+          toast.error('Payment failed')
           
-          // Show toast notification
-          if (status === 'success') {
-            toast.success('Payment successful!')
-            
-            // Redirect to order page after 3 seconds
-            setTimeout(() => {
-              router.push(`/orders/${orderId}`)
-            }, 3000)
-          }
-        } catch (apiError: any) {
-          console.error('API call error:', apiError)
-          // For simulation/demo purposes, still show success
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('Showing success despite API error for demo purposes')
-            setStatus('success')
-            setMessage('Payment was simulated successfully! Redirecting to orders page...')
-            toast.success('Payment simulated successfully!')
-            
-            // Redirect to orders page after 3 seconds
-            setTimeout(() => {
-              router.push('/orders')
-            }, 3000)
-            return
-          }
+          // Redirect to payment page after 2 seconds
+          setTimeout(() => {
+            router.push(`/orders/${orderId}/payment?error=failed`)
+          }, 2000)
+        } else if (txStatus === 'CANCELLED' || data.status === 'cancelled') {
+          setStatus('error')
+          setMessage('Payment was cancelled.')
+          toast.error('Payment cancelled')
           
-          throw apiError
+          // Redirect to payment page after 2 seconds
+          setTimeout(() => {
+            router.push(`/orders/${orderId}/payment?error=cancelled`)
+          }, 2000)
+        } else {
+          setStatus('error')
+          setMessage('Payment status unknown. Please contact support.')
+          toast.error('Payment status unknown')
         }
       } catch (error: any) {
         console.error('Payment verification error:', error)
@@ -185,10 +130,10 @@ export default function PaymentCallback() {
                 </button>
                 {orderID && (
                   <button
-                    onClick={() => router.push(`/orders/${orderID}`)}
+                    onClick={() => router.push(`/orders/${orderID}/payment`)}
                     className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
                   >
-                    View Order
+                    Try Again
                   </button>
                 )}
               </div>
