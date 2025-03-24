@@ -14,6 +14,21 @@ if (!APP_ID || !SECRET_KEY) {
   console.error('Missing required Cashfree environment variables');
 }
 
+// Add these type guards at the top of the file after the imports
+const ensureSecretKey = () => {
+  if (!SECRET_KEY) {
+    throw new Error('CASHFREE_SECRET_KEY is not configured');
+  }
+  return SECRET_KEY;
+};
+
+const ensureAppId = () => {
+  if (!APP_ID) {
+    throw new Error('CASHFREE_APP_ID is not configured');
+  }
+  return APP_ID;
+};
+
 // Interface for payment initiation parameters
 interface PaymentInitParams {
   orderId: string;
@@ -109,8 +124,8 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-client-id': APP_ID,
-        'x-client-secret': SECRET_KEY ? '***' : undefined,
+        'x-client-id': ensureAppId(),
+        'x-client-secret': ensureSecretKey(),
         'x-api-version': API_VERSION
       }
     });
@@ -120,12 +135,12 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
       `${CASHFREE_BASE_URL}/orders`,
       {
         method: 'POST',
-        headers: {
+        headers: new Headers({
           'Content-Type': 'application/json',
-          'x-client-id': APP_ID,
-          'x-client-secret': SECRET_KEY,
+          'x-client-id': ensureAppId(),
+          'x-client-secret': ensureSecretKey(),
           'x-api-version': API_VERSION
-        },
+        }),
         body: JSON.stringify(cashfreePayload)
       }
     );
@@ -165,10 +180,12 @@ export const initializePayment = async (config: CashfreePaymentConfig) => {
 
 // Verify webhook signature from Cashfree
 export function verifyWebhookSignature(
-  payload: Record<string, any>, 
-  secretKey: string = SECRET_KEY
+  payload: Record<string, any>,
+  secretKey?: string
 ): boolean {
   try {
+    const validSecretKey = secretKey || ensureSecretKey();
+    
     // Skip verification in development mode if needed
     if (process.env.NODE_ENV !== 'production' && process.env.SKIP_SIGNATURE_VERIFICATION === 'true') {
       return true;
@@ -184,7 +201,7 @@ export function verifyWebhookSignature(
     
     // Compute signature
     const computedSignature = crypto
-      .createHmac('sha256', secretKey)
+      .createHmac('sha256', validSecretKey)
       .update(dataString)
       .digest('base64');
     
@@ -201,11 +218,11 @@ export const getPaymentStatus = async (orderId: string) => {
     const response = await fetch(
       `${CASHFREE_BASE_URL}/orders/${orderId}`,
       {
-        headers: {
-          'x-client-id': APP_ID,
-          'x-client-secret': SECRET_KEY,
+        headers: new Headers({
+          'x-client-id': ensureAppId(),
+          'x-client-secret': ensureSecretKey(),
           'x-api-version': API_VERSION
-        }
+        })
       }
     );
 
@@ -231,12 +248,13 @@ export const verifyPaymentSignature = (
   signature: string
 ) => {
   try {
+    const secretKey = ensureSecretKey();
     // Create the data string that was used to generate the signature
     const dataString = orderId + orderAmount + referenceId + paymentStatus;
     
     // Create HMAC SHA256 hash
     const expectedSignature = crypto
-      .createHmac('sha256', SECRET_KEY)
+      .createHmac('sha256', secretKey)
       .update(dataString)
       .digest('base64');
 
