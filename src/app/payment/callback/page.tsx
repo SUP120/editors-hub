@@ -54,16 +54,16 @@ export default function PaymentCallback() {
           setMessage('Payment successful! Redirecting to your order...')
           toast.success('Payment successful!')
           
-          // Redirect to order page after 2 seconds
+          // Redirect to order details page after 2 seconds
           setTimeout(() => {
-            router.push(`/orders/${orderId}`)
+            router.push(`/orders/${orderId}/details`)
           }, 2000)
         } else if (txStatus === 'FAILED' || data.status === 'failed') {
           setStatus('error')
           setMessage('Payment failed. Please try again.')
-          toast.error('Payment failed')
+          toast.error('Payment failed!')
           
-          // Redirect to payment page after 2 seconds
+          // Redirect back to payment page with error
           setTimeout(() => {
             router.push(`/orders/${orderId}/payment?error=failed`)
           }, 2000)
@@ -72,7 +72,7 @@ export default function PaymentCallback() {
           setMessage('Payment was cancelled.')
           toast.error('Payment cancelled')
           
-          // Redirect to payment page after 2 seconds
+          // Redirect back to payment page with cancelled status
           setTimeout(() => {
             router.push(`/orders/${orderId}/payment?error=cancelled`)
           }, 2000)
@@ -80,12 +80,24 @@ export default function PaymentCallback() {
           setStatus('error')
           setMessage('Payment status unknown. Please contact support.')
           toast.error('Payment status unknown')
+          
+          // Redirect back to payment page with unknown error
+          setTimeout(() => {
+            router.push(`/orders/${orderId}/payment?error=unknown`)
+          }, 2000)
         }
       } catch (error: any) {
         console.error('Payment verification error:', error)
         setStatus('error')
         setMessage(error.message || 'Payment verification failed')
         toast.error(error.message || 'Payment verification failed')
+        
+        // On error, redirect back to payment page
+        if (orderID) {
+          setTimeout(() => {
+            router.push(`/orders/${orderID}/payment?error=verification_failed`)
+          }, 2000)
+        }
       }
     }
 
